@@ -98,7 +98,9 @@
 
   function random() {
     const choices = visible.filter(sample => sample.id !== player.sample?.id);
-    play(choices[Math.floor(Math.random() * choices.length)] || visible[0]);
+    const sample = choices[Math.floor(Math.random() * choices.length)] || visible[0];
+    play(sample);
+    rowElements.get(sample?.id)?.element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
   }
 
   function createShuffledOrder() {
