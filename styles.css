@@ -75,7 +75,7 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .sound-canvas { min-height: 360px; padding: 0; background: transparent; }
 .sound-canvas[data-view="list"] { padding: 0; }
 .sample-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill,minmax(min(100%,210px),1fr)); align-content: start; }
-.sample-row { --wave-idle: #707070; --wave-active: #e6e6e6; position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1fr) 34px; grid-template-rows: minmax(40px,1fr) 43px 24px; grid-template-areas: "number play" "wave wave" "duration download"; gap: 7px; aspect-ratio: 1; min-width: 0; padding: 17px 17px 11px; background: #101010; border: 1px solid #282828; border-radius: var(--panel-radius); cursor: pointer; scroll-margin-top: 110px; scroll-margin-bottom: 150px; transition: border-color .15s, background .15s; }
+.sample-row { --wave-idle: #707070; --wave-active: #e6e6e6; position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1fr) 34px; grid-template-rows: minmax(40px,1fr) 43px 24px; grid-template-areas: "number number" "wave wave" "duration download"; gap: 7px; aspect-ratio: 1; min-width: 0; padding: 17px 17px 11px; background: #101010; border: 1px solid #282828; border-radius: var(--panel-radius); cursor: pointer; scroll-margin-top: 110px; scroll-margin-bottom: 150px; transition: border-color .15s, background .15s; }
 /* Covers keep their original brightness until the pointer hovers over the card. */
 .card-art { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; opacity: 1; border-radius: inherit; }
 .card-art .macro-sprite { opacity: 1; }
@@ -84,37 +84,30 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
   .sample-row:hover .card-art::after { opacity: .62; }
 }
 .sample-row:hover { border-color: #666; background: #141414; }
-.sample-row:focus-within { border-color: #a6a6a6; }
+.sample-row:has(:focus-visible) { border-color: #a6a6a6; }
 .sample-row.is-current { --wave-idle: #7f7f7f; --wave-active: #eee; background: #202020; border-color: #6c6c6c; box-shadow: none; }
 .sample-number { grid-area: number; width: max-content; align-self: start; padding: 0; text-align: left; background: none; color: #e9e9e9; text-shadow: 0 1px 3px #000, 0 0 12px #000b; }
 .sample-title { display: block; font: 500 35px/1 var(--numerals); letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
-.sample-play { grid-area: play; justify-self: end; align-self: start; display: grid; place-items: center; height: 30px; width: 30px; border-radius: 3px; background: #0b0b0ba6; border: 1px solid #666; color: #ddd; padding: 0; }
-.sample-play .icon { width: 16px; height: 16px; }
-.sample-play:hover { background: #444; color: #fff; }
-.is-current .sample-play { background: #c7c7c7; border-color: #d0d0d0; color: #171717; }
-.sample-play.is-loading { animation: load-pulse .8s ease-in-out infinite alternate; }
+.sample-number.is-loading { animation: load-pulse .8s ease-in-out infinite alternate; }
 .waveform { grid-area: wave; position: relative; isolation: isolate; align-self: center; width: 100%; height: 39px; }
 .waveform::before { content: ""; position: absolute; z-index: -1; inset: -4px -6px; border-radius: 8px; background: #080808e6; pointer-events: none; }
 .waveform-canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 1px #000b); }
 .waveform input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: crosshair; }
-.waveform:focus-within { outline: 1px solid currentColor; outline-offset: 4px; border-radius: 3px; }
 .sample-duration { grid-area: duration; align-self: center; color: #ccc; text-shadow: 0 1px 3px #000, 0 0 8px #000; font: 400 11px var(--font); font-variant-numeric: tabular-nums; }
 .sample-download { grid-area: download; height: 25px; width: 25px; justify-self: end; color: #ddd; background: #08080880; }
 .sample-download .icon { height: 14px; width: 14px; }
 .sample-list[data-view="compact"] { grid-template-columns: repeat(auto-fill,minmax(min(100%,124px),1fr)); gap: 8px; }
 [data-view="compact"] .sample-row { padding: 12px 11px 8px; grid-template-columns: minmax(0,1fr) 25px; grid-template-rows: minmax(30px,1fr) 26px 20px; gap: 4px; }
 [data-view="compact"] .sample-title { font-size: 28px; }
-[data-view="compact"] .sample-play { width: 24px; height: 24px; }
-[data-view="compact"] .sample-play .icon { width: 12px; height: 12px; }
 [data-view="compact"] .waveform { height: 25px; }
 [data-view="compact"] .sample-duration { font-size: 10px; }
 [data-view="compact"] .sample-download { width: 21px; height: 21px; }
 [data-view="compact"] .sample-download .icon { width: 12px; height: 12px; }
 .sample-list[data-view="list"] { grid-template-columns: 1fr; gap: 4px; }
-[data-view="list"] .sample-row { grid-template-columns: 76px 34px minmax(80px,1fr) 50px 30px; grid-template-rows: 1fr; grid-template-areas: "number play wave duration download"; gap: 18px; height: 72px; aspect-ratio: auto; padding: 12px 18px; background: #121212; border-color: transparent; border-bottom-color: #303030; }
+[data-view="list"] .sample-row { grid-template-columns: 76px minmax(80px,1fr) 50px 30px; grid-template-rows: 1fr; grid-template-areas: "number wave duration download"; gap: 18px; height: 72px; aspect-ratio: auto; padding: 12px 18px; background: #121212; border-color: transparent; border-bottom-color: #303030; }
 [data-view="list"] .card-art { width: 76px; right: auto; }
 [data-view="list"] .sample-row.is-current { background: #202020; border-color: #626262; }
-[data-view="list"] .sample-number, [data-view="list"] .sample-play { align-self: center; }
+[data-view="list"] .sample-number { align-self: center; }
 [data-view="list"] .sample-title { font-size: 29px; }
 [data-view="list"] .waveform { height: 34px; }
 [data-view="list"] .sample-duration { text-align: right; }
@@ -220,9 +213,8 @@ dialog p { color: var(--muted); font-size: 12px; margin: 7px 0 24px; }
   .sample-list[data-view="compact"] { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
   [data-view="compact"] .sample-row { padding: 9px 8px 6px; grid-template-columns: minmax(0,1fr) 21px; grid-template-rows: minmax(25px,1fr) 23px 19px; gap: 3px; }
   [data-view="compact"] .sample-title { font-size: 25px; }
-  [data-view="compact"] .sample-play { width: 21px; height: 21px; }
   [data-view="compact"] .waveform { height: 22px; }
-  [data-view="list"] .sample-row { grid-template-columns: 61px 32px minmax(65px,1fr) 39px 27px; gap: 12px; padding: 12px; }
+  [data-view="list"] .sample-row { grid-template-columns: 61px minmax(65px,1fr) 39px 27px; gap: 12px; padding: 12px; }
   .player { left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom,0px)); }
   .player-inner { grid-template-columns: 1fr auto; grid-template-areas: "current controls" "timeline timeline" "options options"; gap: 7px 16px; padding: 35px 16px 10px; }
   .player-options { justify-content: flex-end; gap: 14px; padding: 0; border: 0; background: transparent; }
@@ -255,16 +247,13 @@ dialog p { color: var(--muted); font-size: 12px; margin: 7px 0 24px; }
   .sample-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
   .sample-row { padding: 13px 11px 8px; }
   .sample-title { font-size: 32px; }
-  .sample-play { width: 28px; height: 28px; }
   .sample-list[data-view="compact"] { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
   [data-view="compact"] .sample-row { padding: 9px 7px 5px; grid-template-columns: minmax(0,1fr) 20px; grid-template-rows: minmax(22px,1fr) 20px 18px; gap: 2px; }
   [data-view="compact"] .sample-title { font-size: 25px; }
-  [data-view="compact"] .sample-play { height: 20px; width: 20px; }
   [data-view="compact"] .sample-download { height: 19px; width: 19px; }
   [data-view="compact"] .waveform { height: 20px; }
-  [data-view="list"] .sample-row { grid-template-columns: 46px 28px minmax(0,1fr) 25px; grid-template-rows: 1fr 22px; grid-template-areas: "number play wave download" "number play duration download"; gap: 0 10px; height: 77px; padding: 10px 8px; }
+  [data-view="list"] .sample-row { grid-template-columns: 46px minmax(0,1fr) 25px; grid-template-rows: 1fr 22px; grid-template-areas: "number wave download" "number duration download"; gap: 0 10px; height: 77px; padding: 10px 8px; }
   [data-view="list"] .sample-title { font-size: 26px; }
-  [data-view="list"] .sample-play { width: 28px; height: 28px; }
   [data-view="list"] .sample-duration { font-size: 10px; text-align: left; }
   [data-view="list"] .sample-download { align-self: center; }
   [data-view="list"] .waveform { height: 27px; }

@@ -154,14 +154,12 @@
     setSprite(row, sample);
     row.innerHTML = `<span class="card-art" aria-hidden="true"><span class="macro-sprite"></span></span>
       <button class="sample-number" data-action="play" aria-label="Воспроизвести ${escapeHTML(sample.title)}"><span class="sample-title">${escapeHTML(sample.title)}</span></button>
-      <button class="sample-play" data-action="play" aria-label="Воспроизвести ${escapeHTML(sample.title)}">${icon('play')}</button>
       <div class="waveform"><canvas class="waveform-canvas" aria-hidden="true"></canvas><input type="range" min="0" max="1000" value="0" data-action="seek" aria-label="Позиция: ${escapeHTML(sample.title)}" aria-valuetext="0:00 из ${time(sample.duration)}"></div>
       <span class="sample-duration">${time(sample.duration)}</span>
       <a class="icon-button sample-download" href="${escapeHTML(sample.original)}" download="${sample.title}.mp3" aria-label="Скачать ${escapeHTML(sample.title)}" title="Скачать оригинал">${icon('download')}</a>`;
     rowElements.set(sample.id, {
       element: row,
-      play: row.querySelector('.sample-play'),
-      playIcon: row.querySelector('.sample-play use'),
+      numberButton: row.querySelector('.sample-number'),
       wave: row.querySelector('.waveform'),
       waveView: new window.Waveform(row.querySelector('.waveform'), sample.peaks),
       seek: row.querySelector('input'),
@@ -229,9 +227,8 @@
         previous.waveView.setProgress(0);
         previous.seek.value = 0;
         previous.seek.setAttribute('aria-valuetext', `0:00 из ${time(byId.get(lastPlayerId).duration)}`);
-        previous.playIcon.setAttribute('href', '#i-play');
-        previous.play.classList.remove('is-loading');
-        previous.play.setAttribute('aria-label', `Воспроизвести ${byId.get(lastPlayerId).title}`);
+        previous.numberButton.classList.remove('is-loading');
+        previous.numberButton.setAttribute('aria-label', `Воспроизвести ${byId.get(lastPlayerId).title}`);
       }
       lastPlayerId = sample?.id || null;
       lastPlaying = null;
@@ -256,8 +253,7 @@
       if (sample) $('#player-subtitle').textContent = `${sectionOf(sample)} · ${playing ? 'Сейчас играет' : 'На паузе'}`;
       if (sample) {
         const row = rowElements.get(sample.id);
-        row.playIcon.setAttribute('href', playing ? '#i-pause' : '#i-play');
-        row.play.setAttribute('aria-label', `${playing ? 'Пауза' : 'Воспроизвести'} ${sample.title}`);
+        row.numberButton.setAttribute('aria-label', `${playing ? 'Пауза' : 'Воспроизвести'} ${sample.title}`);
       }
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
       lastPlaying = playing;
@@ -272,7 +268,7 @@
       row.waveView.setProgress(fraction);
       row.seek.value = Math.round(fraction * 1000);
       row.seek.setAttribute('aria-valuetext', `${time(audio.currentTime)} из ${time(duration)}`);
-      row.play.classList.toggle('is-loading', player.loading);
+      row.numberButton.classList.toggle('is-loading', player.loading);
     }
   }
 
