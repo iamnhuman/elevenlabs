@@ -26,6 +26,7 @@
   if (!views.includes(displayView)) displayView = 'cards';
   const sectionOf = sample => sample.duration > 30 ? 'track' : 'samples';
   let visible = [...samples];
+  const shuffledOrders = new Map();
   const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio);
   let progressFrame = 0;
   let lastProgressTime = 0;
@@ -100,6 +101,24 @@
     play(choices[Math.floor(Math.random() * choices.length)] || visible[0]);
   }
 
+  function createShuffledOrder() {
+    const ids = samples.filter(sample => sectionOf(sample) === filter).map(sample => sample.id);
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    // Even a coincidentally identical draw must visibly change the current order.
+    if (ids.length > 1 && ids.length === visible.length && ids.every((id, index) => id === visible[index].id)) ids.push(ids.shift());
+    return new Map(ids.map((id, index) => [id, index]));
+  }
+
+  function shuffleCards() {
+    if (visible.length < 2) return;
+    shuffledOrders.set(filter, createShuffledOrder());
+    $('#sort').value = 'shuffle';
+    renderList();
+  }
+
   function setSprite(element, sample) {
     // Artwork identity is independent of each section's displayed numbering.
     // Never wrap to the first image when the prepared artwork runs out.
@@ -159,6 +178,11 @@
     const sort = $('#sort').value;
     if (sort === 'short') visible.sort((a, b) => a.duration - b.duration);
     if (sort === 'long') visible.sort((a, b) => b.duration - a.duration);
+    if (sort === 'shuffle') {
+      if (!shuffledOrders.has(filter)) shuffledOrders.set(filter, createShuffledOrder());
+      const order = shuffledOrders.get(filter);
+      visible.sort((a, b) => order.get(a.id) - order.get(b.id));
+    }
     $('#sample-list').replaceChildren(...visible.map(sample => rowElements.get(sample.id).element));
     visible.forEach(sample => rowElements.get(sample.id).waveView.refresh());
     $('#result-label').textContent = `${visible.length} ${filter === 'track' ? (visible.length === 1 ? 'трек' : 'треков') : word(visible.length)}${query ? ` по запросу «${$('#search').value.trim()}»` : ''}`;
@@ -167,6 +191,7 @@
     $('#sample-list').setAttribute('aria-label', filter === 'track' ? 'Треки' : 'Семплы');
     $('#collection-meta').textContent = filter === 'track' ? 'Больше 30 секунд' : 'До 30 секунд';
     $('#empty-state').hidden = visible.length > 0;
+    $('#shuffle-cards').disabled = visible.length < 2;
     $('#empty-title').textContent = 'Ничего не нашлось';
     $('#empty-description').textContent = `Проверь номер или открой раздел ${filter === 'track' ? 'samples' : 'track'}.`;
     $$('[data-filter]').forEach(button => {
@@ -261,12 +286,15 @@
     renderList();
   }));
   $('#search').addEventListener('input', renderList);
-  $('#sort').addEventListener('change', renderList);
+  $('#sort').addEventListener('change', () => {
+    if ($('#sort').value === 'shuffle' && visible.length > 1) shuffleCards();
+    else renderList();
+  });
   $('#reset-filters').addEventListener('click', () => { $('#search').value = ''; renderList(); $('#search').focus(); });
   $('#play-pause').addEventListener('click', togglePlayback);
   $('#previous').addEventListener('click', () => adjacent(-1));
   $('#next').addEventListener('click', () => adjacent(1));
-  $('#random-sample').addEventListener('click', random);
+  $('#shuffle-cards').addEventListener('click', shuffleCards);
   $('#player-random').addEventListener('click', random);
   $('#seek').addEventListener('input', event => player.seek(Number(event.target.value) / 1000));
   $('#loop').addEventListener('click', () => { audio.loop = !audio.loop; $('#loop').setAttribute('aria-pressed', String(audio.loop)); storage.set('loop', audio.loop); });

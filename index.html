@@ -66,12 +66,12 @@
               <button data-view="compact" aria-pressed="false" title="Плотная сетка — много мелких карточек" aria-label="Плотная сетка"><svg class="icon"><use href="#i-compact"/></svg><span>Плотно</span></button>
               <button data-view="list" aria-pressed="false" title="Список" aria-label="Список"><svg class="icon"><use href="#i-list"/></svg><span>Список</span></button>
             </div>
-            <button class="random-button" id="random-sample" title="Случайный звук (R)" aria-label="Случайный звук"><svg class="icon"><use href="#i-shuffle"/></svg></button>
+            <button class="random-button" id="shuffle-cards" title="Перемешать карточки" aria-label="Перемешать карточки"><svg class="icon"><use href="#i-shuffle"/></svg></button>
           </div>
         </div>
         <div class="list-tools">
           <div class="list-info"><span id="result-label" role="status">120 семплов</span><span class="collection-meta" id="collection-meta">До 30 секунд</span></div>
-          <label class="sort-control"><span class="sr-only">Сортировка</span><select id="sort"><option value="default">По номеру</option><option value="short">Сначала короткие</option><option value="long">Сначала длинные</option></select></label>
+          <label class="sort-control"><span class="sr-only">Сортировка</span><select id="sort"><option value="default">По номеру</option><option value="short">Сначала короткие</option><option value="long">Сначала длинные</option><option value="shuffle">Случайный порядок</option></select></label>
         </div>
         <div class="sound-canvas" id="sound-canvas">
           <div class="sample-list" id="sample-list" data-view="cards" role="list" aria-label="Семплы"></div>
