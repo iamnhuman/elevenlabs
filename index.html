@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="elevenlabs test — треки и семплы ElevenLabs. Слушай, сравнивай и скачивай звуки.">
+  <title>elevenlabs test</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="samples.js" defer></script>
+  <script src="assets/art/macro-200/artwork.js" defer></script>
+  <script src="audio-player.js" defer></script>
+  <script src="assets/vendor/three/three.js" defer></script>
+  <script src="spectrogram-3d.js" defer></script>
+  <script src="player-spectrum.js" defer></script>
+  <script src="waveform.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#collection">К семплам</a>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3.5"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="m5 6 10 6-10 6z" fill="currentColor" stroke="none"/><path d="M19 6v12"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="m19 6-10 6 10 6z" fill="currentColor" stroke="none"/><path d="M5 6v12"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></symbol>
+      <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c4 0 8 12 12 12h3m-4-4 4 4-4 4M3 18h3c1.5 0 3-2 4.5-4.5M13.5 10.5C15 8 16 6 18 6h3m-4-4 4 4-4 4"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+      <symbol id="i-muted" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5zM17 9l5 6m0-6-5 6"/></symbol>
+      <symbol id="i-loop" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4M3 10V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.1M10 9h.1M14 9h.1M18 9h.1M6 12h.1M10 12h.1M14 12h.1M18 12h.1M7 15h10"/></symbol>
+      <symbol id="i-mark" viewBox="0 0 24 24"><path d="M5 8v8M12 3v18M19 6v12" stroke-width="3"/></symbol>
+      <symbol id="i-cards" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-compact" viewBox="0 0 24 24"><path d="M3 3h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4zM3 10h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4zM3 17h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 5h13M8 12h13M8 19h13M3 5h.1M3 12h.1M3 19h.1"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="elevenlabs test — главная">
+        <img class="brand-logo" src="assets/brand/elevenlabs-logo-white.svg" width="694" height="90" alt="ElevenLabs">
+      </a>
+      <div class="header-tools">
+        <button class="icon-button keyboard-button" id="show-shortcuts" title="Горячие клавиши (?)" aria-label="Горячие клавиши"><svg class="icon"><use href="#i-keyboard"/></svg></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="collection" id="collection" aria-labelledby="collection-title">
+        <h1 id="collection-title" class="sr-only">samples</h1><span id="sample-count" class="sr-only">120</span>
+        <div class="toolbar">
+          <div class="filters" role="group" aria-label="Фильтр коллекции">
+            <button class="filter" data-filter="track" aria-pressed="false">track <span data-count="track">1</span></button>
+            <button class="filter active" data-filter="samples" aria-pressed="true">samples <span data-count="samples">120</span></button>
+          </div>
+          <div class="toolbar-right">
+            <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" inputmode="numeric" placeholder="Найти номер…" aria-label="Поиск по номеру семпла" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
+            <div class="view-switch" role="group" aria-label="Вид отображения">
+              <button data-view="cards" aria-pressed="true" title="Карточки" aria-label="Карточки"><svg class="icon"><use href="#i-cards"/></svg><span>Карточки</span></button>
+              <button data-view="compact" aria-pressed="false" title="Плотная сетка — много мелких карточек" aria-label="Плотная сетка"><svg class="icon"><use href="#i-compact"/></svg><span>Плотно</span></button>
+              <button data-view="list" aria-pressed="false" title="Список" aria-label="Список"><svg class="icon"><use href="#i-list"/></svg><span>Список</span></button>
+            </div>
+            <button class="random-button" id="random-sample" title="Случайный звук (R)" aria-label="Случайный звук"><svg class="icon"><use href="#i-shuffle"/></svg></button>
+          </div>
+        </div>
+        <div class="list-tools">
+          <div class="list-info"><span id="result-label" role="status">120 семплов</span><span class="collection-meta" id="collection-meta">До 30 секунд</span></div>
+          <label class="sort-control"><span class="sr-only">Сортировка</span><select id="sort"><option value="default">По номеру</option><option value="short">Сначала короткие</option><option value="long">Сначала длинные</option></select></label>
+        </div>
+        <div class="sound-canvas" id="sound-canvas">
+          <div class="sample-list" id="sample-list" data-view="cards" role="list" aria-label="Семплы"></div>
+        <div class="empty-state" id="empty-state" hidden>
+          <svg class="icon"><use href="#i-search"/></svg>
+          <h3 id="empty-title">Ничего не нашлось</h3>
+          <p id="empty-description">Попробуй другой номер или открой соседний раздел.</p>
+          <button class="secondary-button" id="reset-filters">Сбросить поиск</button>
+        </div>
+        </div>
+        <noscript><p class="noscript-message">Для плеера нужен JavaScript. <a href="samplepack/">Открыть папку с оригиналами</a>.</p></noscript>
+        <footer class="collection-footer"><span class="footer-hint"><span class="pointer-hint">Наведи, чтобы выделить звук. Нажми, чтобы слушать.</span><span class="touch-hint">Нажми на карточку, чтобы слушать.</span></span><span class="footer-shortcuts"><kbd>space</kbd> пауза <kbd>↑</kbd><kbd>↓</kbd> сменить звук <kbd>V</kbd> сменить вид</span></footer>
+      </section>
+    </main>
+  </div>
+
+  <section class="player" aria-label="Аудиоплеер">
+    <div class="player-spectrum" id="player-spectrum" aria-hidden="true"></div>
+    <div class="spectrum-scale" aria-hidden="true"><span style="left:0">32 Hz</span><span style="left:21.9%">125</span><span style="left:44.2%">500</span><span style="left:66.5%">2k</span><span style="left:88.8%">8k</span><span style="left:100%">16k</span></div>
+    <div class="player-inner">
+      <div class="now-playing">
+        <div class="now-playing-text"><div id="player-title">—</div><div id="player-subtitle">Выбери семпл</div></div>
+      </div>
+      <div class="transport">
+        <div class="transport-buttons">
+          <button class="icon-button loop-button" id="loop" aria-label="Повторять семпл" aria-pressed="false" title="Повторять (L)"><svg class="icon"><use href="#i-loop"/></svg></button>
+          <button class="icon-button" id="previous" aria-label="Предыдущий семпл" title="Предыдущий (↑)"><svg class="icon"><use href="#i-prev"/></svg></button>
+          <button class="player-play" id="play-pause" aria-label="Воспроизвести" title="Воспроизвести / пауза (пробел)"><svg class="icon"><use href="#i-play"/></svg></button>
+          <button class="icon-button" id="next" aria-label="Следующий семпл" title="Следующий (↓)"><svg class="icon"><use href="#i-next"/></svg></button>
+          <button class="icon-button" id="player-random" aria-label="Случайный семпл" title="Случайный (R)"><svg class="icon"><use href="#i-shuffle"/></svg></button>
+        </div>
+      </div>
+      <div class="player-options">
+        <div class="volume-control"><button class="icon-button" id="mute" aria-label="Выключить звук" title="Звук (M)"><svg class="icon"><use href="#i-volume"/></svg></button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Громкость"></div>
+        <a class="icon-button player-download" id="player-download" aria-label="Скачать оригинал" title="Скачать оригинал" hidden download><svg class="icon"><use href="#i-download"/></svg></a>
+      </div>
+      <div class="player-timeline"><time id="current-time">0:00</time><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Позиция воспроизведения" aria-valuetext="0:00" disabled><time id="duration">0:00</time></div>
+    </div>
+  </section>
+  <audio id="audio" preload="none"></audio>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <dialog id="shortcuts-dialog">
+    <div class="dialog-heading"><h2>Под рукой</h2><button class="icon-button" id="close-shortcuts" aria-label="Закрыть"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <p>Меньше кликов, больше звука.</p>
+    <dl class="shortcut-list"><div><dt>Воспроизведение / пауза</dt><dd><kbd>space</kbd></dd></div><div><dt>Предыдущий / следующий</dt><dd><kbd>↑</kbd><kbd>↓</kbd></dd></div><div><dt>Назад / вперёд на 2 секунды</dt><dd><kbd>←</kbd><kbd>→</kbd></dd></div><div><dt>Вид: карточки / плотно / список</dt><dd><kbd>V</kbd></dd></div><div><dt>Поиск</dt><dd><kbd>/</kbd></dd></div><div><dt>Случайный звук</dt><dd><kbd>R</kbd></dd></div><div><dt>Повторять семпл</dt><dd><kbd>L</kbd></dd></div><div><dt>Выключить звук</dt><dd><kbd>M</kbd></dd></div></dl>
+  </dialog>
+</body>
+</html>
