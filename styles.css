@@ -142,6 +142,7 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .player-spectrum[data-state="idle"], .player-spectrum[data-state="unavailable"] { opacity: 0; }
 .player[data-spectrum-view="2d"] .spectrum-scale { visibility: hidden; }
 .player[data-spectrum-view="2d"] .player-spectrum { inset: 0; }
+.player[data-spectrum-view="2d"] .player-inner { padding-left: 64px; }
 .player[data-spectrum-view="2d"]::before { background: linear-gradient(180deg,#07070718 0%,#07070724 70%,#07070766 100%); }
 .player[data-spectrum-view="2d"] .player-spectrum[data-state="paused"] { opacity: .8; }
 .player[data-spectrum-view="2d"] .transport { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -153,11 +154,11 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .spectrum-scale span { position: absolute; transform: translateX(-50%); }
 .spectrum-scale span:first-child { transform: none; }
 .spectrum-scale span:last-child { transform: translateX(-100%); }
-.player-inner { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(140px,1fr) auto minmax(240px,1fr); grid-template-areas: "current controls options" "timeline timeline timeline"; align-items: center; column-gap: 22px; row-gap: 11px; padding: 55px 22px 12px; }
+.player-inner { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(140px,1fr) auto minmax(220px,1fr); grid-template-areas: "current controls options" "timeline timeline timeline"; align-items: center; column-gap: 22px; row-gap: 11px; padding: 55px 22px 12px; }
 .now-playing { grid-area: current; display: flex; align-items: center; align-self: stretch; min-width: 0; padding: 7px 12px; border: 0; border-radius: 8px; background: linear-gradient(90deg,#070707cc,#07070700); }
 .now-playing-text { min-width: 0; }
 #player-title { font: 500 32px/1 var(--numerals); letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: #eee; text-shadow: 0 2px 12px #000; }
-#player-subtitle { color: #b0b0b0; font-size: 10px; margin-top: 4px; white-space: nowrap; }
+#player-subtitle { color: #b0b0b0; font-size: 10px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .transport { grid-area: controls; padding: 7px 10px; border: 0; border-radius: var(--panel-radius); background: #070707a6; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
 .transport-buttons { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .transport-buttons .icon { width: 17px; height: 17px; }
