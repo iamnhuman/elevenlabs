@@ -153,7 +153,7 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
   .touch-hint { display: inline; }
 }
 
-/* One continuous control rail; the measured spectrogram fills its entire backdrop. */
+/* Separate control backplates leave the spectrum visible between groups. */
 .player { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom,0px)); left: 24px; right: 24px; max-width: 1360px; margin: auto; z-index: 10; isolation: isolate; overflow: hidden; border: 1px solid #28282c; border-radius: 16px; background: #070707; box-shadow: 0 16px 60px #000d; }
 .player::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(180deg,#05050508 0%,#05050514 62%,#050505b3 100%); }
 .player.can-seek { cursor: crosshair; }
@@ -164,18 +164,16 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .player-spectrum[data-state="idle"], .player-spectrum[data-state="unavailable"] { opacity: 0; }
 .player[data-spectrum-view="2d"] .spectrum-scale { visibility: hidden; }
 .player[data-spectrum-view="2d"] .player-inner { padding-left: 64px; }
-.player[data-spectrum-view="2d"] .player-inner::before { left: 64px; }
 .spectrum-scale { position: absolute; z-index: 2; top: 12px; left: 16px; right: 16px; height: 10px; color: #aaa; pointer-events: none; font: 400 10px/1 var(--font); }
 .spectrum-scale span { position: absolute; transform: translateX(-50%); }
 .spectrum-scale span:first-child { transform: none; }
 .spectrum-scale span:last-child { transform: translateX(-100%); }
 .player-inner { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(110px,1fr) auto minmax(210px,1fr); grid-template-areas: "current controls options" "timeline timeline timeline"; align-items: center; gap: 12px 20px; padding: 40px 20px 12px; }
-.player-inner::before { content: ""; position: absolute; z-index: -1; top: 34px; bottom: 38px; left: 14px; right: 14px; border-radius: var(--panel-radius); background: #050505d9; pointer-events: none; }
-.now-playing { grid-area: current; display: flex; align-items: center; min-width: 0; padding: 6px 12px; }
+.now-playing { grid-area: current; display: flex; align-items: center; justify-self: start; min-width: 0; max-width: 100%; padding: 6px 12px; border-radius: var(--panel-radius); background: #070707a6; }
 .now-playing-text { min-width: 0; }
 #player-title { color: #f2f2ef; font: 500 28px/1 var(--numerals); letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
 #player-subtitle { margin-top: 4px; color: #a8a8af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-.transport { grid-area: controls; padding: 6px; border-radius: var(--panel-radius); }
+.transport { grid-area: controls; padding: 6px; border-radius: var(--panel-radius); background: #070707a6; }
 .transport-buttons { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .transport-buttons .icon { width: 18px; height: 18px; }
 .transport-buttons .icon-button { width: 32px; height: 38px; color: #bdbdc3; }
@@ -189,7 +187,7 @@ input[type="range"] { accent-color: var(--accent); }
 .player-timeline input { width: 100%; }
 .player-timeline input::-webkit-slider-thumb, .volume-control input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 4px; height: 10px; border-radius: 2px; background: #eee; }
 .player-timeline input::-moz-range-thumb, .volume-control input::-moz-range-thumb { width: 4px; height: 10px; border: 0; border-radius: 2px; background: #eee; }
-.player-options { grid-area: options; display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; padding: 6px; }
+.player-options { grid-area: options; display: flex; align-items: center; justify-content: flex-end; justify-self: end; gap: 12px; min-width: 0; max-width: 100%; padding: 6px; border-radius: var(--panel-radius); background: #070707a6; }
 .spectrum-switch { display: inline-flex; align-items: center; flex-shrink: 0; gap: 2px; padding: 3px; border-radius: 8px; background: #1d1d21; }
 .spectrum-switch button { min-width: 30px; min-height: 27px; padding: 4px 6px; border-radius: 5px; background: transparent; color: #9999a1; font-size: 10px; }
 .spectrum-switch button:hover { color: #eee; }
@@ -249,7 +247,6 @@ dialog p { margin: 7px 0 24px; color: var(--muted); font-size: 12px; }
   .footer-shortcuts { display: none; }
   .player { left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom,0px)); }
   .player-inner { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "current controls" "options options" "timeline timeline"; gap: 8px 12px; padding: 32px 14px 10px; }
-  .player-inner::before { top: 28px; bottom: 36px; right: 10px; }
   .now-playing { padding: 5px 10px; }
   #player-title { font-size: 25px; }
   #player-subtitle { font-size: 10px; }
@@ -257,7 +254,7 @@ dialog p { margin: 7px 0 24px; color: var(--muted); font-size: 12px; }
   .transport-buttons { gap: 3px; }
   .transport-buttons .icon-button { width: 28px; height: 34px; }
   .player-play { width: 40px; height: 40px; }
-  .player-options { min-height: 32px; gap: 12px; padding: 0 6px; }
+  .player-options { min-height: 32px; gap: 12px; padding: 4px 6px; }
   .spectrum-switch { margin-right: auto; }
   .volume-control .icon-button, .player-download { height: 29px; }
   .player-timeline { padding-top: 0; gap: 10px; }
@@ -294,7 +291,7 @@ dialog p { margin: 7px 0 24px; color: var(--muted); font-size: 12px; }
   .collection-footer { padding-top: 18px; }
   .player { left: 10px; right: 10px; border-radius: 14px; }
   .player-inner { column-gap: 8px; padding-right: 12px; }
-  .now-playing { padding-right: 0; padding-left: 8px; }
+  .now-playing { padding-right: 8px; padding-left: 8px; }
   #player-title { font-size: 24px; }
   #player-subtitle { font-size: 9px; }
   .transport-buttons { gap: 2px; }
