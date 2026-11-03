@@ -98,7 +98,7 @@
       ctx.fillRect(cursor, top, left + width - cursor, height);
       ctx.fillStyle = '#ffffffe0';
       ctx.fillRect(Math.min(left + width - 1, cursor), top, 1, height);
-      ctx.font = '400 9px "Oxanium", sans-serif';
+      ctx.font = '400 10px "IBM Plex Sans", sans-serif';
       ctx.textBaseline = 'top';
       ctx.fillStyle = '#aaa';
       ctx.shadowColor = '#000';

@@ -62,7 +62,7 @@
             <button class="filter active" data-filter="samples" aria-pressed="true">samples <span data-count="samples">120</span></button>
           </div>
           <div class="toolbar-right">
-            <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" inputmode="numeric" placeholder="Найти номер…" aria-label="Поиск по номеру семпла" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
+            <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" inputmode="numeric" placeholder="Номер звука" aria-label="Поиск по номеру семпла" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
             <div class="view-switch" role="group" aria-label="Вид отображения">
               <button data-view="cards" aria-pressed="true" title="Карточки" aria-label="Карточки"><svg class="icon"><use href="#i-cards"/></svg><span>Карточки</span></button>
               <button data-view="compact" aria-pressed="false" title="Плотная сетка — много мелких карточек" aria-label="Плотная сетка"><svg class="icon"><use href="#i-compact"/></svg><span>Плотно</span></button>
@@ -85,7 +85,7 @@
         </div>
         </div>
         <noscript><p class="noscript-message">Для плеера нужен JavaScript. <a href="samplepack/">Открыть папку с оригиналами</a>.</p></noscript>
-        <footer class="collection-footer"><span class="footer-hint"><span class="pointer-hint">Наведи, чтобы выделить звук. Нажми, чтобы слушать.</span><span class="touch-hint">Нажми на карточку, чтобы слушать.</span></span><span class="footer-shortcuts"><kbd>space</kbd> пауза <kbd>↑</kbd><kbd>↓</kbd> сменить звук <kbd>V</kbd> сменить вид</span></footer>
+        <footer class="collection-footer"><span class="footer-hint"><span class="pointer-hint">Нажми на карточку, чтобы слушать. Волна — для перемотки.</span><span class="touch-hint">Нажми на карточку, чтобы слушать.</span></span><span class="footer-shortcuts"><kbd>space</kbd> пауза <kbd>↑</kbd><kbd>↓</kbd> сменить звук <kbd>V</kbd> сменить вид</span></footer>
       </section>
     </main>
   </div>
@@ -121,7 +121,7 @@
   <div class="toast" id="toast" role="status" hidden></div>
   <dialog id="shortcuts-dialog">
     <div class="dialog-heading"><h2>Под рукой</h2><button class="icon-button" id="close-shortcuts" aria-label="Закрыть"><svg class="icon"><use href="#i-close"/></svg></button></div>
-    <p>Меньше кликов, больше звука.</p>
+    <p>Управляй плеером с клавиатуры.</p>
     <dl class="shortcut-list"><div><dt>Воспроизведение / пауза</dt><dd><kbd>space</kbd></dd></div><div><dt>Предыдущий / следующий</dt><dd><kbd>↑</kbd><kbd>↓</kbd></dd></div><div><dt>Назад / вперёд на 2 секунды</dt><dd><kbd>←</kbd><kbd>→</kbd></dd></div><div><dt>Вид: карточки / плотно / список</dt><dd><kbd>V</kbd></dd></div><div><dt>Поиск</dt><dd><kbd>/</kbd></dd></div><div><dt>Случайный звук</dt><dd><kbd>R</kbd></dd></div><div><dt>Повторять семпл</dt><dd><kbd>L</kbd></dd></div><div><dt>Выключить звук</dt><dd><kbd>M</kbd></dd></div></dl>
   </dialog>
 </body>

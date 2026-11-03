@@ -50,7 +50,7 @@ def main():
     paths = ["index.html", ".nojekyll", *page.assets]
     paths.extend(re.findall(r'url\([\'"]?([^\'")]+)', (ROOT / "styles.css").read_text()))
     paths.extend([
-        "assets/fonts/OFL-Exo2.txt", "assets/fonts/OFL-Oxanium.txt",
+        "assets/fonts/OFL-IBMPlex.txt", "assets/fonts/OFL-Exo2.txt", "assets/fonts/OFL-Oxanium.txt",
         "assets/vendor/audiomotion/LICENSE", "assets/vendor/audiomotion/NOTICE.md",
         "assets/vendor/audiomotion/source.js",
         "assets/vendor/three/three.module.js", "assets/vendor/three/three.core.js",
