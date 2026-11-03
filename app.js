@@ -10,6 +10,7 @@
   const samples = library.samples;
   const byId = new Map(samples.map(sample => [sample.id, sample]));
   const audio = $('#audio');
+  const playerPanel = $('.player');
   const storage = {
     get(key, fallback) {
       try { return JSON.parse(localStorage.getItem(`sample-room:${key}`)) ?? fallback; }
@@ -240,6 +241,7 @@
         $('#player-download').download = `${sample.title}.mp3`;
         $('#player-download').hidden = false;
         $('#seek').disabled = false;
+        playerPanel.classList.add('can-seek');
         rowElements.get(sample.id).element.classList.add('is-current');
         rowElements.get(sample.id).waveView.setActive(true);
         if ('mediaSession' in navigator && 'MediaMetadata' in window) {
@@ -309,6 +311,12 @@
   $('#shuffle-cards').addEventListener('click', shuffleCards);
   $('#player-random').addEventListener('click', random);
   $('#seek').addEventListener('input', event => player.seek(Number(event.target.value) / 1000));
+  playerPanel.addEventListener('click', event => {
+    if (!player.sample || event.button !== 0 || event.defaultPrevented) return;
+    if (event.target.closest('button, a, input, select, label, [role="button"], .transport, .player-options, .player-timeline')) return;
+    const bounds = playerPanel.getBoundingClientRect();
+    if (bounds.width > 0) player.seek((event.clientX - bounds.left) / bounds.width);
+  });
   $('#loop').addEventListener('click', () => { audio.loop = !audio.loop; $('#loop').setAttribute('aria-pressed', String(audio.loop)); storage.set('loop', audio.loop); });
 
   function updateVolume() {
