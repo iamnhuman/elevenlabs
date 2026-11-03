@@ -134,7 +134,7 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .player::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(180deg,#0707070a 0%,#07070720 24%,#07070742 62%,#070707e6 100%); }
 .player-spectrum { position: absolute; z-index: 0; inset: 9px 0 10px; pointer-events: none; opacity: .98; transition: opacity .2s; }
 .player-spectrum canvas { display: block; width: 100% !important; height: 100% !important; }
-.player-spectrum[data-state="paused"] { opacity: .64; }
+.player-spectrum[data-state="paused"] { opacity: .8; }
 .player-spectrum[data-state="idle"], .player-spectrum[data-state="unavailable"] { opacity: 0; }
 .player[data-spectrum-view="2d"] .spectrum-scale { visibility: hidden; }
 .player[data-spectrum-view="2d"] .player-spectrum { inset: 0; }

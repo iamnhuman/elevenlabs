@@ -56,6 +56,8 @@ def main():
         "assets/vendor/three/three.module.js", "assets/vendor/three/three.core.js",
         "assets/vendor/three/LICENSE", "assets/vendor/three/NOTICE.md",
         "assets/vendor/three/three.js",
+        "assets/vendor/sonoscope/LICENSE", "assets/vendor/sonoscope/NOTICE.md",
+        "assets/vendor/sonoscope/provenance.json", "assets/vendor/sonoscope/terrain-source.ts",
     ])
     art = json.loads((ROOT / "assets/art/macro-200/manifest.json").read_text())
     assert art["count"] == 200 and art["columns"] == art["rows"] == 5

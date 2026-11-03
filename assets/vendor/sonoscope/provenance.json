@@ -1,0 +1,8 @@
+{
+  "terrainRepository": "https://github.com/mbsantiago/sonoscope",
+  "terrainRevision": "370388884aacf0bdf540ed40215dca4a2f0775d9",
+  "terrainSource": "packages/terrain-spectrogram/src/index.ts",
+  "coreVersion": "0.2.0",
+  "coreTarball": "https://registry.npmjs.org/@sonoscope/core/-/core-0.2.0.tgz",
+  "coreIntegrity": "sha512-mGJkZHlQLEJrnyKFfpuOkNa48XT1lep/FCvUYGeuLx7PA03j7VEYmVxHau5hPuIMAhbEzrXcH8FNhOsCnP/XMw=="
+}

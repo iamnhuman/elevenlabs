@@ -1,0 +1,46 @@
+{
+  "name": "@sonoscope/core",
+  "version": "0.2.0",
+  "description": "High-performance WebGL2 and WASM-accelerated audio spectrogram engine for the web.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mbsantiago/sonoscope.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://mbsantiago.github.io/sonoscope/",
+  "type": "module",
+  "license": "MIT",
+  "author": "Santiago",
+  "keywords": [
+    "audio",
+    "spectrogram",
+    "sonoscope",
+    "stft",
+    "webgl",
+    "canvas",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:wasm": "node ../../scripts/build-wasm.mjs",
+    "build": "npm run build:wasm && vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "check:types": "tsc --noEmit"
+  }
+}

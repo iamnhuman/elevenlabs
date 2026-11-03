@@ -1,44 +1,42 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const Spectrogram3D = require('../spectrogram-3d.js');
+const { updateTerrainTile } = require('../spectrogram-3d.js');
 
-test('FFT history keeps distinct moments and clears when changing the audio source', () => {
-  const history = new Spectrogram3D.History(8, 4);
-  history.push([{ freq: 32, value: [.8] }, { freq: 16000, value: [.8] }]);
-  history.push([{ freq: 32, value: [.2] }, { freq: 16000, value: [.2] }]);
-  assert.ok(Math.abs(history.values[0] - .2) < .000001);
-  assert.ok(Math.abs(history.values[8] - .8) < .000001);
-  assert.equal(history.values[16], 0);
-  history.clear();
-  assert.ok(history.values.every(v => v === 0));
+function recording() { return { bins: 4, rate: 100, frames: 601, minDb: -96, maxDb: -12, data: new Uint8Array(2404) }; }
+
+test('Sonoscope input keeps frequency horizontal and the most recent sound at the front', () => {
+  const audio = recording();
+  audio.data[400 * 4 + 1] = 255;
+  audio.data[100 * 4 + 2] = 255;
+  const tile = updateTerrainTile(audio, 4, 1);
+  assert.equal(tile.frameCount, 4);
+  assert.equal(tile.binCount, 128);
+  assert.equal(tile.normalized[1 * 128], 1, 'Current frequency occupies the front row');
+  assert.equal(tile.normalized[2 * 128 + 127], 1, 'Three seconds ago occupies the rear row');
+  assert.equal(tile.normalized[3 * 128], 0);
 });
 
-test('low and high frequency peaks occupy opposite ends of the logarithmic surface', () => {
-  const history = new Spectrogram3D.History(9, 3);
-  const bars = history.frequencies.map((freq, index) => ({ freq, value: [index === 1 ? 1 : 0] }));
-  history.push(bars);
-  assert.equal(history.values[1], 1);
-  assert.equal(history.values[7], 0);
-  bars[1].value[0] = 0; bars[7].value[0] = 1;
-  history.push(bars);
-  assert.equal(history.values[1], 0);
-  assert.equal(history.values[7], 1);
-  assert.equal(history.values[10], 1, 'The preceding low-frequency peak recedes into time');
-  const ratio = history.frequencies[1] / history.frequencies[0];
-  assert.ok(history.frequencies.slice(1).every((freq, i) => Math.abs(freq / history.frequencies[i] - ratio) < .000001));
+test('seeking replaces the measured history without keeping an obsolete frame', () => {
+  const audio = recording(); audio.data[400 * 4 + 1] = 255; audio.data[100 * 4 + 2] = 255;
+  const tile = updateTerrainTile(audio, 4, 1);
+  assert.equal(updateTerrainTile(audio, 1, 1, tile), tile, 'The matrix buffer is reused');
+  assert.equal(tile.normalized[1 * 128], 0);
+  assert.equal(tile.normalized[2 * 128], 1);
 });
 
-test('silence stays flat and invalid FFT values cannot produce spikes or NaN vertices', () => {
-  const history = new Spectrogram3D.History(8, 4);
-  history.push([{ freq: 32, value: [0] }, { freq: 16000, value: [0] }]);
-  assert.ok(history.values.every(v => v === 0));
-  history.push([{ freq: 32, value: [NaN] }, { freq: 16000, value: [2] }]);
-  assert.ok(history.values.every(v => Number.isFinite(v) && v >= 0 && v <= 1));
+test('silence, muted audio and time before the beginning do not create terrain', () => {
+  const audio = recording();
+  assert.ok(updateTerrainTile(audio, 3, 1).normalized.every(v => v === 0));
+  audio.data.fill(255);
+  assert.ok(updateTerrainTile(audio, 3, 0).normalized.every(v => v === 0));
+  const tile = updateTerrainTile(audio, 0, 1);
+  assert.equal(tile.normalized[0], 1);
+  assert.equal(tile.normalized[127], 0, 'No invented history before the clip starts');
 });
 
-test('thermal color progresses from deep red through orange to yellow at high energy', () => {
-  const red = Spectrogram3D.thermalColor(.33), orange = Spectrogram3D.thermalColor(.67), yellow = Spectrogram3D.thermalColor(1);
-  assert.ok(red[0] > red[1] * 10);
-  assert.ok(orange[1] > red[1]);
-  assert.ok(yellow[0] > .95 && yellow[1] > .9 && yellow[2] < .2);
+test('sub-frame playback interpolates real spectral frames into a stable surface', () => {
+  const audio = recording(); audio.data[4] = 255;
+  const tile = updateTerrainTile(audio, .005, 1);
+  assert.ok(tile.normalized[0] > .3 && tile.normalized[0] < .5);
+  assert.ok(tile.normalized.every(v => Number.isFinite(v) && v >= 0 && v <= 1));
 });

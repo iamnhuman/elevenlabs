@@ -1,86 +1,71 @@
-/* A bank of illuminated metal frequency columns; recent time recedes along Z. */
+/* Sonoscope Terrain adapter: measured frequency across X, recent time into depth. */
 (function (root) {
   'use strict';
   const clamp = value => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-  const MIN_FREQ = 32, MAX_FREQ = 16000, DEPTH = 8.6, HEIGHT = 2.4;
-  const reliefEnergy = value => clamp((value - .18) / .82);
+  const ROWS = 128, HISTORY_SECONDS = 3;
+  const DISPLAY_MIN_DB = -82, DISPLAY_MAX_DB = -12;
+  const OPTIONS = {
+    meshResolution: [256, 128], heightScale: 1.15, heightGamma: 1.8,
+    fov: 45, cameraPitch: 52, cameraYaw: 0, cameraDistance: 2.8,
+    cameraTarget: [0, 0, .12], smoothing: .65,
+    ambientLight: .48, diffuseLight: .60, lightDirection: [.15, -.35, .85],
+  };
+  const COLOR_MAP = { points: [
+    { at: 0, color: '#000000' }, { at: .2, color: '#230303' },
+    { at: .45, color: '#7d0d04' }, { at: .70, color: '#ee4605' },
+    { at: .85, color: '#ff9c15' }, { at: 1, color: '#fff89b' },
+  ] };
 
-  class SpectrogramHistory {
-    constructor(bins = 96, rows = 72) {
-      this.bins = bins;
-      this.rows = rows;
-      this.values = new Float32Array(bins * rows);
-      this.frequencies = Array.from({ length: bins }, (_, i) => MIN_FREQ * (MAX_FREQ / MIN_FREQ) ** (i / (bins - 1)));
-    }
-
-    push(bars) {
-      if (!bars.length) return;
-      this.values.copyWithin(this.bins, 0, this.values.length - this.bins);
-      let index = 0;
-      for (let x = 0; x < this.bins; x++) {
-        const frequency = this.frequencies[x];
-        while (index + 1 < bars.length && bars[index + 1].freq < frequency) index++;
-        const a = bars[index], b = bars[Math.min(index + 1, bars.length - 1)];
-        const mix = a === b ? 0 : clamp(Math.log(frequency / a.freq) / Math.log(b.freq / a.freq));
-        this.values[x] = clamp(clamp(a.value[0]) * (1 - mix) + clamp(b.value[0]) * mix);
+  function updateTerrainTile(recording, seconds, volume = 1, tile) {
+    const bins = recording.bins;
+    if (!tile || tile.frameCount !== bins) tile = {
+      channel: 0, frameStart: 0, timeStart: 0, timeEnd: 1,
+      frameCount: bins, binCount: ROWS, sampleRate: 32000,
+      times: Float32Array.from({ length: bins }, (_, i) => i / bins),
+      frequencies: Float32Array.from({ length: ROWS }, (_, i) => i / (ROWS - 1)),
+      magnitude: new Float32Array(bins * ROWS),
+      db: new Float32Array(bins * ROWS),
+      normalized: new Float32Array(bins * ROWS),
+    };
+    if (volume <= 0) { tile.magnitude.fill(0); tile.db.fill(-120); tile.normalized.fill(0); return tile; }
+    const minDb = recording.minDb ?? -90;
+    const range = (recording.maxDb ?? -25) - (recording.minDb ?? -90);
+    const offset = 20 * Math.log10(volume);
+    const now = Math.min(Math.max(0, seconds), (recording.frames - 1) / recording.rate);
+    for (let age = 0; age < ROWS; age++) {
+      const position = (now - age / (ROWS - 1) * HISTORY_SECONDS) * recording.rate;
+      const first = Math.floor(Math.max(0, position));
+      const last = Math.min(recording.frames - 1, first + 1);
+      const mix = Math.max(0, position) - first;
+      for (let bin = 0; bin < bins; bin++) {
+        const a = recording.data[first * bins + bin] / 255;
+        const b = recording.data[last * bins + bin] / 255;
+        // Sonoscope lays its first axis horizontally. Transpose the measured
+        // matrix so it shows frequency across X and sound history in depth.
+        const i = bin * ROWS + age;
+        const db = position < 0 ? -120 : (a * (1 - mix) + b * mix) * range + minDb + offset;
+        tile.db[i] = db;
+        tile.magnitude[i] = position < 0 ? 0 : 10 ** (db / 20);
+        tile.normalized[i] = clamp((db - DISPLAY_MIN_DB) / (DISPLAY_MAX_DB - DISPLAY_MIN_DB));
       }
     }
-
-    clear() { this.values.fill(0); }
-  }
-
-  // The same thermal palette is used by the GPU surface and the software fallback.
-  function thermalColor(value) {
-    const t = clamp(value);
-    const stops = [[.07, 0, 0], [.85, .015, 0], [1, .22, .005], [1, .94, .12]];
-    const p = Math.min(2.9999, t * 3), i = Math.floor(p), f = p - i;
-    return stops[i].map((channel, c) => channel + (stops[i + 1][c] - channel) * f);
+    return tile;
   }
 
   class Spectrogram3D {
-    static create(element) { return new Spectrogram3D(element, root.THREE); }
+    static create(element) { return new Spectrogram3D(element, root.SonoscopeTerrain); }
 
-    constructor(element, THREE) {
-      this.element = element;
-      this.THREE = THREE;
-      this.history = new SpectrogramHistory(64, 18);
-      this.scene = new THREE.Scene();
-      this.scene.fog = new THREE.FogExp2(0x050505, .018);
-      this.camera = new THREE.OrthographicCamera(-1, 1, 4, -4, .1, 100);
-      const profile = new THREE.Shape();
-      profile.moveTo(-.5, -.5); profile.lineTo(.5, -.5);
-      profile.lineTo(.5, .5); profile.lineTo(-.5, .5); profile.closePath();
-      this.geometry = new THREE.ExtrudeGeometry(profile, {
-        depth: 1, bevelEnabled: true, bevelSize: .04, bevelThickness: .04,
-        bevelSegments: 2, steps: 1, curveSegments: 1,
-      });
-      this.geometry.scale(1 / 1.08, 1 / 1.08, 1 / 1.08);
-      this.geometry.rotateX(-Math.PI / 2);
-      this.geometry.center();
-      this.geometry.rotateY(.18);
-      this.material = new THREE.MeshStandardMaterial({ metalness: .65, roughness: .28 });
-      this.capGeometry = new THREE.PlaneGeometry(.88, .88);
-      this.capGeometry.rotateX(-Math.PI / 2); this.capGeometry.rotateY(.18);
-      this.capMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
-      const count = this.history.values.length;
-      this.columns = new THREE.InstancedMesh(this.geometry, this.material, count);
-      this.caps = new THREE.InstancedMesh(this.capGeometry, this.capMaterial, count);
-      for (const mesh of [this.columns, this.caps]) {
-        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        mesh.frustumCulled = false;
-        this.scene.add(mesh);
-      }
-      this.transform = new THREE.Object3D();
-      this.color = new THREE.Color();
-      this.scene.add(new THREE.AmbientLight(0xffffff, .85));
-      const key = new THREE.DirectionalLight(0xffffff, 3.4); key.position.set(-4, 8, 6); this.scene.add(key);
-      const rim = new THREE.DirectionalLight(0xff8a42, 1.2); rim.position.set(4, 3, -8); this.scene.add(rim);
+    constructor(element, library = root.SonoscopeTerrain) {
+      if (!library) throw new Error('Sonoscope Terrain is unavailable');
+      this.element = element; this.library = library;
+      this.tile = null;
+      this.palette = library.buildColorMap(COLOR_MAP);
+      this.canvas = element.ownerDocument.createElement('canvas');
       try {
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power', stencil: false });
-        this.renderer.setPixelRatio(Math.min(root.devicePixelRatio || 1, 2));
-        this.renderer.setClearColor(0x000000, 0);
-        this.renderer.debug.onShaderError = () => { this.shaderFailed = true; };
-        this.canvas = this.renderer.domElement;
+        const gl = this.canvas.getContext('webgl2', { alpha: false, antialias: true, depth: true, powerPreference: 'low-power' });
+        if (!gl) throw new Error('WebGL2 is unavailable');
+        this.program = new library.TerrainSpectrogramProgram(gl, OPTIONS);
+        this.renderer = new library.WebGL2SpectrogramRenderer(gl, this.program);
         this.canvas.addEventListener('webglcontextlost', event => {
           event.preventDefault(); this.useSoftwareRenderer(); this.resize();
         }, { once: true });
@@ -95,129 +80,114 @@
 
     useSoftwareRenderer() {
       const mounted = !this.canvas || this.canvas.parentNode === this.element;
-      this.software = true; this.renderer?.dispose(); this.renderer = null;
+      if (this.renderer) this.renderer.destroy?.();
+      else this.program?.delete();
+      this.program = this.renderer = null;
+      this.software = true;
       this.canvas = this.element.ownerDocument.createElement('canvas');
       this.ctx = this.canvas.getContext('2d');
       if (mounted) this.element.replaceChildren(this.canvas);
     }
 
     resize() {
-      this.width = this.element.clientWidth || 1000; this.height = this.element.clientHeight || 160;
-      const aspect = this.width / this.height;
-      this.camera.left = -aspect * 4; this.camera.right = aspect * 4;
-      this.camera.position.set(2 / Math.max(1, aspect / 2), 6.8, 11.8);
-      this.camera.lookAt(0, .65, -.4); this.camera.updateMatrixWorld(); this.camera.updateProjectionMatrix();
-      this.span = aspect * 8 * .93;
-      this.barWidth = this.span / this.history.bins * .70;
-      this.barDepth = DEPTH / (this.history.rows - 1) * .60;
-      if (this.renderer) this.renderer.setSize(this.width, this.height, false);
-      else { this.canvas.width = this.width; this.canvas.height = this.height; }
+      this.width = this.element.clientWidth || 1000;
+      this.height = this.element.clientHeight || 160;
+      const ratio = Math.min(root.devicePixelRatio || 1, 2);
+      this.canvas.width = Math.round(this.width * ratio);
+      this.canvas.height = Math.round(this.height * ratio);
+      this.ctx?.setTransform?.(ratio, 0, 0, ratio, 0, 0);
+      const { eye, target, up } = this.library.computeTerrainCamera(OPTIONS);
+      this.viewProjection = this.library.multiplyMat4(
+        this.library.perspective(OPTIONS.fov * Math.PI / 180, this.width / this.height, .1, 100),
+        this.library.lookAt(eye, target, up),
+      );
       this.render();
     }
 
-    clear() { this.history.clear(); this.render(); }
-    push(bars) { this.history.push(bars); this.render(); }
+    clear() { this.tile = null; this.render(); }
 
     show(recording, seconds, volume = 1) {
-      const { bins, rows, values } = this.history;
-      const latest = Math.min(recording.frames - 1, Math.max(0, Math.floor(seconds * recording.rate)));
-      const range = (recording.maxDb ?? -25) - (recording.minDb ?? -90);
-      const offset = volume > 0 ? 20 * Math.log10(volume) / range : -1;
-      for (let row = 0; row < rows; row++) {
-        const frame = latest - Math.round(row / (rows - 1) * 3 * recording.rate);
-        for (let x = 0; x < bins; x++) {
-          let peak = 0;
-          if (frame >= 0) {
-            const start = Math.floor(x * recording.bins / bins);
-            const end = Math.max(start + 1, Math.floor((x + 1) * recording.bins / bins));
-            for (let bin = start; bin < end; bin++) peak = Math.max(peak, recording.data[frame * recording.bins + bin]);
-          }
-          values[row * bins + x] = frame < 0 ? 0 : clamp(peak / 255 + offset);
-        }
-      }
+      this.tile = updateTerrainTile(recording, seconds, volume, this.tile);
       this.render();
-    }
-
-    column(row, x) {
-      const value = this.history.values[row * this.history.bins + x];
-      const energy = reliefEnergy(value);
-      return {
-        energy, height: energy < .025 ? 0 : energy ** 1.9 * HEIGHT,
-        x: ((x + .5) / this.history.bins - .5) * this.span,
-        z: DEPTH / 2 - row / (this.history.rows - 1) * DEPTH,
-        fade: 1 - row / (this.history.rows - 1) * .70,
-      };
-    }
-
-    updateInstances() {
-      const { bins, rows } = this.history;
-      const object = this.transform;
-      for (let row = 0; row < rows; row++) {
-        for (let x = 0; x < bins; x++) {
-          const i = row * bins + x, bar = this.column(row, x);
-          const rgb = thermalColor(bar.energy);
-          object.position.set(bar.x, bar.height / 2, bar.z);
-          object.scale.set(bar.height ? this.barWidth : 0, bar.height, bar.height ? this.barDepth : 0);
-          object.updateMatrix(); this.columns.setMatrixAt(i, object.matrix);
-          this.color.setRGB(.045 + rgb[0] * .13, .045 + rgb[1] * .13, .05 + rgb[2] * .13).multiplyScalar(bar.fade);
-          this.columns.setColorAt(i, this.color);
-          object.position.y = bar.height + .006;
-          object.scale.y = bar.height ? 1 : 0;
-          object.updateMatrix(); this.caps.setMatrixAt(i, object.matrix);
-          this.color.setRGB(...rgb).multiplyScalar((.35 + bar.energy * .65) * bar.fade);
-          this.caps.setColorAt(i, this.color);
-        }
-      }
-      for (const mesh of [this.columns, this.caps]) {
-        mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
-      }
     }
 
     render() {
       if (this.renderer) {
-        this.updateInstances(); this.renderer.render(this.scene, this.camera);
-        if (!this.shaderFailed) return;
-        this.useSoftwareRenderer(); this.resize(); return;
+        try {
+          // Sonoscope owns shader compilation, mesh, texture upload, palette and lighting.
+          this.renderer.invalidate();
+          this.renderer.render({
+            canvas: this.canvas,
+            viewport: { startTime: 0, endTime: 1, minFrequency: 0, maxFrequency: 1 },
+            frequencyScale: 'linear',
+            valueScale: { mode: 'db', min: DISPLAY_MIN_DB, max: DISPLAY_MAX_DB, gamma: 1, clamp: true },
+            colorMap: COLOR_MAP, tiles: this.tile ? [this.tile] : [],
+          });
+          return;
+        } catch { this.useSoftwareRenderer(); this.resize(); return; }
       }
       const ctx = this.ctx;
       if (!ctx) return;
       ctx.clearRect(0, 0, this.width, this.height);
-      const point = new this.THREE.Vector3(), angle = .18, cos = Math.cos(angle), sin = Math.sin(angle);
-      const drawFace = (points, indices, color) => {
-        ctx.fillStyle = `rgb(${color.map(v => Math.round(clamp(v) * 255)).join(',')})`;
+      if (!this.tile) return;
+      this.renderSoftware();
+    }
+
+    sample(u, v) {
+      const tile = this.tile;
+      const x = clamp(u) * (tile.frameCount - 1), y = clamp(v) * (tile.binCount - 1);
+      const x0 = Math.floor(x), x1 = Math.min(tile.frameCount - 1, x0 + 1);
+      const y0 = Math.floor(y), y1 = Math.min(tile.binCount - 1, y0 + 1);
+      const a = tile.normalized[x0 * tile.binCount + y0] * (1 - (y - y0)) + tile.normalized[x0 * tile.binCount + y1] * (y - y0);
+      const b = tile.normalized[x1 * tile.binCount + y0] * (1 - (y - y0)) + tile.normalized[x1 * tile.binCount + y1] * (y - y0);
+      return a * (1 - (x - x0)) + b * (x - x0);
+    }
+
+    smoothHeight(u, v) {
+      const dx = 1 / (this.tile.frameCount - 1), dy = 1 / (this.tile.binCount - 1);
+      const neighbors = (this.sample(u - dx, v) + this.sample(u + dx, v) + this.sample(u, v - dy) + this.sample(u, v + dy)) / 4;
+      return this.sample(u, v) * (1 - OPTIONS.smoothing) + neighbors * OPTIONS.smoothing;
+    }
+
+    project(u, v, energy) {
+      const x = (u * 2 - 1) * (this.width / this.height * 1.05);
+      const y = (v - .5) * 1.9, z = energy ** OPTIONS.heightGamma * OPTIONS.heightScale * .5;
+      const m = this.viewProjection;
+      const w = m[3] * x + m[7] * y + m[11] * z + m[15];
+      return [((m[0] * x + m[4] * y + m[8] * z + m[12]) / w + 1) * this.width / 2,
+        (1 - (m[1] * x + m[5] * y + m[9] * z + m[13]) / w) * this.height / 2];
+    }
+
+    renderSoftware() {
+      // Use the library's triangulation and camera even without WebGL2.
+      this.softwareMesh ||= this.library.terrainVerticesForTile(this.tile, 48, 28);
+      const mesh = this.softwareMesh, ctx = this.ctx;
+      const light = OPTIONS.lightDirection, lightLength = Math.hypot(...light);
+      for (let i = mesh.length - 12; i >= 0; i -= 12) {
+        const uv = [[mesh[i + 2], mesh[i + 3]], [mesh[i + 6], mesh[i + 7]], [mesh[i + 10], mesh[i + 11]]];
+        const heights = uv.map(([u, v]) => this.smoothHeight(u, v));
+        const energy = (heights[0] + heights[1] + heights[2]) / 3;
+        if (energy < .005) continue;
+        const u = (uv[0][0] + uv[1][0] + uv[2][0]) / 3, v = (uv[0][1] + uv[1][1] + uv[2][1]) / 3;
+        const dx = 2 / (this.tile.frameCount - 1), dy = 2 / (this.tile.binCount - 1);
+        const nx = this.sample(u - dx, v) - this.sample(u + dx, v), ny = this.sample(u, v - dy) - this.sample(u, v + dy);
+        const shade = OPTIONS.ambientLight + Math.max(0, (nx * light[0] + ny * light[1] + 1.2 * light[2]) / (Math.hypot(nx, ny, 1.2) * lightLength)) * OPTIONS.diffuseLight;
+        const rgb = this.palette[Math.min(255, Math.round(energy * 255))];
+        ctx.fillStyle = `rgb(${rgb.slice(0, 3).map(channel => Math.min(255, Math.round(channel * shade))).join(',')})`;
         ctx.beginPath();
-        indices.forEach((index, n) => ctx[n ? 'lineTo' : 'moveTo'](...points[index]));
+        uv.forEach(([a, b], index) => ctx[index ? 'lineTo' : 'moveTo'](...this.project(a, b, heights[index])));
         ctx.closePath(); ctx.fill();
-      };
-      for (let row = this.history.rows - 1; row >= 0; row--) {
-        for (let x = 0; x < this.history.bins; x++) {
-          const bar = this.column(row, x);
-          if (!bar.height) continue;
-          const points = [];
-          for (let top = 0; top <= 1; top++) {
-            for (const [sx, sz] of [[-1,-1],[1,-1],[1,1],[-1,1]]) {
-              const dx = sx * this.barWidth / 2, dz = sz * this.barDepth / 2;
-              point.set(bar.x + dx * cos + dz * sin, top * bar.height, bar.z + dz * cos - dx * sin).project(this.camera);
-              points.push([(point.x + 1) * this.width / 2, (1 - point.y) * this.height / 2]);
-            }
-          }
-          const rgb = thermalColor(bar.energy);
-          const body = rgb.map(v => (.075 + v * .16) * bar.fade);
-          drawFace(points, [3,2,6,7], body);
-          drawFace(points, [2,1,5,6], body.map(v => v * .62));
-          drawFace(points, [4,5,6,7], rgb.map(v => v * (.35 + bar.energy * .65) * bar.fade));
-        }
       }
     }
 
     destroy() {
       this.observer?.disconnect(); root.removeEventListener?.('resize', this.resize);
-      this.renderer?.dispose(); this.geometry.dispose(); this.material.dispose();
-      this.capGeometry.dispose(); this.capMaterial.dispose(); this.canvas.remove();
+      if (this.renderer) this.renderer.destroy(); else this.program?.delete();
+      this.canvas.remove(); this.tile = null; this.softwareMesh = null;
     }
   }
-  Spectrogram3D.History = SpectrogramHistory;
-  Spectrogram3D.thermalColor = thermalColor;
+  Spectrogram3D.updateTerrainTile = updateTerrainTile;
+  Spectrogram3D.options = OPTIONS;
   if (typeof module !== 'undefined' && module.exports) module.exports = Spectrogram3D;
   else root.Spectrogram3D = Spectrogram3D;
 })(typeof window !== 'undefined' ? window : globalThis);
