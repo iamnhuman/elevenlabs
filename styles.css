@@ -75,14 +75,9 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .sound-canvas[data-view="list"] { padding: 0; }
 .sample-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill,minmax(min(100%,210px),1fr)); align-content: start; }
 .sample-row { --wave-idle: #707070; --wave-active: #e6e6e6; position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1fr) 34px; grid-template-rows: minmax(40px,1fr) 43px 24px; grid-template-areas: "number play" "wave wave" "duration download"; gap: 7px; aspect-ratio: 1; min-width: 0; padding: 17px 17px 11px; background: #101010; border: 1px solid #282828; border-radius: 3px; cursor: pointer; scroll-margin-top: 110px; scroll-margin-bottom: 150px; transition: border-color .15s, background .15s; }
-/* The image belongs to the card; interaction dims it to prioritize the controls. */
-.card-art { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; opacity: .72; border-radius: inherit; transition: opacity .22s ease; }
+/* Covers retain their original brightness in every interaction state. */
+.card-art { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; opacity: 1; border-radius: inherit; }
 .card-art .macro-sprite { opacity: 1; }
-.card-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #0005 0%, transparent 30%, transparent 57%, #0009 100%); }
-.sample-row:hover .card-art, .sample-row:has(:focus-visible) .card-art { opacity: .16; }
-@media (hover: none) {
-  .sample-row.is-current .card-art { opacity: .16; }
-}
 .sample-row:hover { border-color: #666; background: #141414; }
 .sample-row:focus-within { border-color: #a6a6a6; }
 .sample-row.is-current { --wave-idle: #7f7f7f; --wave-active: #eee; background: #202020; border-color: #6c6c6c; box-shadow: none; }
