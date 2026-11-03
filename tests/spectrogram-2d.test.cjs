@@ -9,7 +9,7 @@ function fixture() {
       const ctx = {
         images: [], rectangles: [], labels: [], setTransform() {}, clearRect() { this.rectangles = []; this.labels = []; },
         createImageData: (width, height) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) }),
-        putImageData(image) { this.images.push(image); }, drawImage() {},
+        putImageData(image) { this.images.push(image); }, drawImage(...args) { this.drawnImage = args; },
         fillRect(...rect) { this.rectangles.push(rect); }, fillText(label) { this.labels.push(label); },
       };
       contexts.push(ctx);
@@ -30,14 +30,15 @@ test('the flat spectrogram maps time left-to-right and low frequencies below hig
   assert.deepEqual(pixel(0, 63), [255, 255, 225, 255], 'Low tone at the start is at bottom left');
   assert.deepEqual(pixel(3, 0), [255, 255, 225, 255], 'High tone at the end is at top right');
   assert.deepEqual(pixel(0, 0), [0, 0, 0, 255], 'Silent bands stay black');
-  assert.equal(f.ctx.rectangles[1][0], 10 + .25 * 1180, 'Playback cursor follows audio time');
+  assert.deepEqual(f.ctx.drawnImage.slice(1), [0, 0, 1200, 165], 'The heat map fills the player edge to edge');
+  assert.equal(f.ctx.rectangles[1][0], .25 * 1200, 'Playback cursor follows audio time');
 });
 
 test('cursor movement reuses the FFT image; muting removes its energy', () => {
   const f = fixture(); f.visual.show(f.recording, .25, 1);
   f.visual.show(f.recording, .75, 1);
   assert.equal(f.imageCtx.images.length, 1, 'No full image rebuild on every animation frame');
-  assert.equal(f.ctx.rectangles[1][0], 10 + .75 * 1180);
+  assert.equal(f.ctx.rectangles[1][0], .75 * 1200);
   f.visual.show(f.recording, .75, 0);
   const data = f.imageCtx.images[1].data;
   assert.ok([...data].every((value, i) => i % 4 === 3 ? value === 255 : value === 0));

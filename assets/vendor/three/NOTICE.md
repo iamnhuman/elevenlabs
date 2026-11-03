@@ -12,4 +12,4 @@ Original ESM builds `three.module.js` and `three.core.js`, distributed under the
 npx --package esbuild@0.25.12 esbuild assets/vendor/three/three.module.js --bundle --format=iife --global-name=THREE --minify --legal-comments=eof --outfile=assets/vendor/three/three.js
 ```
 
-The site loads this local bundle for the perspective FFT history surface behind the player controls. The classic script also works under file://. There are no runtime CDN requests. The spectral history is measured from the actual MP3s by `scripts/prepare-spectra.cjs` and synchronized to `audio.currentTime`.
+The site loads this local bundle for the 3D FFT history behind the player controls. Orthographic projection keeps the separate frequency slices legible across a wide player. The classic script also works under file://. There are no runtime CDN requests. The spectral history is measured from the actual MP3s by `scripts/prepare-spectra.cjs` and synchronized to `audio.currentTime`.

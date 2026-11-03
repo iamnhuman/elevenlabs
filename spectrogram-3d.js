@@ -1,8 +1,9 @@
-/* A rolling FFT surface: frequency across X, recent time along Z, energy as height. */
+/* Separate FFT time slices: frequency across X, recent time along Z, energy as height. */
 (function (root) {
   'use strict';
   const clamp = value => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-  const MIN_FREQ = 32, MAX_FREQ = 16000, DEPTH = 10, HEIGHT = 3.6;
+  const MIN_FREQ = 32, MAX_FREQ = 16000, DEPTH = 10, HEIGHT = 2.8;
+  const reliefEnergy = value => clamp((value - .18) / .82);
 
   class SpectrogramHistory {
     constructor(bins = 96, rows = 72) {
@@ -46,37 +47,41 @@
       this.THREE = THREE;
       this.history = new SpectrogramHistory(64, 72);
       this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(38, 1, .1, 100);
-      this.camera.position.set(0, 6.4, 9.2);
-      this.camera.lookAt(0, .4, -1.4);
-      this.camera.updateMatrixWorld();
+      this.camera = new THREE.OrthographicCamera(-1, 1, 3.9, -3.9, .1, 100);
       const { bins, rows, values } = this.history;
       const positions = new Float32Array(bins * rows * 3);
+      const edges = new Float32Array(bins * rows);
       const indices = [];
       for (let row = 0; row < rows; row++) {
         for (let x = 0; x < bins; x++) {
           const i = row * bins + x;
           positions[i * 3 + 2] = DEPTH / 2 - row / (rows - 1) * DEPTH;
-          if (row < rows - 1 && x < bins - 1) indices.push(i, i + bins, i + 1, i + 1, i + bins, i + bins + 1);
+          edges[i] = row % 3 === 0 ? 0 : 1;
+          // Separate thin time slices leave air between the peaks instead of a solid sheet.
+          if (row % 3 === 0 && row < rows - 1 && x < bins - 1) indices.push(i, i + bins, i + 1, i + 1, i + bins, i + bins + 1);
         }
       }
       this.geometry = new THREE.BufferGeometry();
       this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       this.geometry.setAttribute('energy', new THREE.BufferAttribute(values, 1).setUsage(THREE.DynamicDrawUsage));
+      this.geometry.setAttribute('ridge', new THREE.BufferAttribute(edges, 1));
       this.geometry.setIndex(indices);
       this.material = new THREE.ShaderMaterial({
         transparent: true,
         side: THREE.DoubleSide,
         vertexShader: `
           attribute float energy;
+          attribute float ridge;
           varying float heat;
           varying float age;
+          varying float edge;
           varying vec3 viewPosition;
           void main() {
-            heat = clamp(energy, 0.0, 1.0);
+            heat = clamp((energy - .18) / .82, 0.0, 1.0);
             age = .5 - position.z / 10.0;
+            edge = ridge;
             vec3 point = position;
-            point.y = pow(heat, 1.5) * 3.6;
+            point.y = pow(heat, 2.2) * 2.8;
             vec4 view = modelViewMatrix * vec4(point, 1.0);
             viewPosition = view.xyz;
             gl_Position = projectionMatrix * view;
@@ -85,16 +90,18 @@
         fragmentShader: `
           varying float heat;
           varying float age;
+          varying float edge;
           varying vec3 viewPosition;
           void main() {
-            if (heat < .025) discard;
+            if (heat < .05) discard;
             vec3 color = mix(vec3(.07, 0.0, 0.0), vec3(.85, .015, 0.0), clamp(heat * 3.0, 0.0, 1.0));
             color = mix(color, vec3(1.0, .22, .005), clamp(heat * 3.0 - 1.0, 0.0, 1.0));
             color = mix(color, vec3(1.0, .94, .12), clamp(heat * 3.0 - 2.0, 0.0, 1.0));
             vec3 normal = normalize(cross(dFdx(viewPosition), dFdy(viewPosition)));
-            float light = .68 + .32 * abs(dot(normal, normalize(vec3(.2, .8, .4))));
-            float fade = 1.0 - age * .60;
-            gl_FragColor = vec4(color * light, smoothstep(.025, .13, heat) * fade * .96);
+            float rim = 1.0 - smoothstep(0.0, .20, edge);
+            float light = .46 + .34 * abs(dot(normal, normalize(vec3(.2, .8, .4)))) + rim * .32;
+            float fade = 1.0 - age * .72;
+            gl_FragColor = vec4(color * light, smoothstep(.05, .22, heat) * fade * .94);
           }
         `,
       });
@@ -103,7 +110,7 @@
       this.mesh.frustumCulled = false;
       this.scene.add(this.mesh);
       try {
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: 'low-power', depth: true, stencil: false });
+        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power', depth: true, stencil: false });
         this.renderer.setPixelRatio(Math.min(root.devicePixelRatio || 1, 1.5));
         this.renderer.setClearColor(0x000000, 0);
         this.renderer.debug.onShaderError = () => { this.shaderFailed = true; };
@@ -139,10 +146,15 @@
     resize() {
       const width = this.element.clientWidth || 1000, height = this.element.clientHeight || 160;
       this.width = width; this.height = height;
-      this.camera.aspect = width / height;
+      const aspect = width / height;
+      this.camera.left = -aspect * 3.9;
+      this.camera.right = aspect * 3.9;
+      this.camera.position.set(1.4 / Math.max(1, aspect / 2), 6.5, 11.5);
+      this.camera.lookAt(0, .75, -.3);
+      this.camera.updateMatrixWorld();
       this.camera.updateProjectionMatrix();
-      // Fill a wide player without stretching the depth or the height of the relief.
-      const span = this.camera.aspect * 7.8;
+      // Orthographic projection keeps distant slices legible and avoids a stretched plateau.
+      const span = aspect * 7.8 * .95;
       const positions = this.geometry.getAttribute('position');
       const { bins, rows } = this.history;
       for (let row = 0; row < rows; row++) {
@@ -191,7 +203,7 @@
         this.resize();
         return;
       }
-      // Genuine perspective projection on Canvas for devices without WebGL 2.
+      // The same 3D projection and separated slices on devices without WebGL 2.
       const ctx = this.ctx;
       if (!ctx) return;
       const { bins, rows, values } = this.history;
@@ -199,17 +211,17 @@
       const position = this.geometry.getAttribute('position');
       const point = new this.THREE.Vector3();
       for (let i = 0; i < values.length; i++) {
-        point.set(position.getX(i), values[i] ** 1.5 * HEIGHT, position.getZ(i)).project(this.camera);
+        point.set(position.getX(i), reliefEnergy(values[i]) ** 2.2 * HEIGHT, position.getZ(i)).project(this.camera);
         points[i] = [(point.x + 1) * this.width / 2, (1 - point.y) * this.height / 2];
       }
       ctx.clearRect(0, 0, this.width, this.height);
-      for (let row = rows - 4; row >= 0; row -= 2) {
-        for (let x = 0; x < bins - 2; x += 2) {
-          const i = row * bins + x, ids = [i, i + 2, i + bins * 2 + 2, i + bins * 2];
-          const energy = ids.reduce((sum, index) => sum + values[index], 0) / 4;
-          if (energy < .025) continue;
-          const rgb = thermalColor(energy).map(v => Math.round(v * 255));
-          ctx.fillStyle = `rgba(${rgb.join(',')},${.95 - row / rows * .55})`;
+      for (let row = Math.floor((rows - 2) / 3) * 3; row >= 0; row -= 3) {
+        for (let x = 0; x < bins - 1; x++) {
+          const i = row * bins + x, ids = [i, i + 1, i + bins + 1, i + bins];
+          const energy = ids.reduce((sum, index) => sum + reliefEnergy(values[index]), 0) / 4;
+          if (energy < .05) continue;
+          const rgb = thermalColor(energy).map(v => Math.round(v * 255 * (.7 + energy * .25)));
+          ctx.fillStyle = `rgba(${rgb.join(',')},${.94 - row / rows * .68})`;
           ctx.beginPath();
           ids.forEach((index, n) => ctx[n ? 'lineTo' : 'moveTo'](...points[index]));
           ctx.closePath(); ctx.fill();

@@ -87,31 +87,34 @@
       const ctx = this.ctx;
       ctx.clearRect(0, 0, this.width, this.height);
       if (!this.recording) return;
-      const left = 10, top = 23, width = this.width - 20, height = Math.max(1, this.height - 33);
+      const left = 0, top = 0, width = this.width, height = this.height;
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(this.image, left, top, width, height);
       const duration = this.recording.frames / this.recording.rate;
       const cursor = left + clamp(this.seconds / duration) * width;
       // The full clip remains visible, with an advancing cursor at the heard moment.
-      ctx.fillStyle = '#00000040';
+      ctx.fillStyle = '#00000020';
       ctx.fillRect(cursor, top, left + width - cursor, height);
       ctx.fillStyle = '#ffffffe0';
       ctx.fillRect(Math.min(left + width - 1, cursor), top, 1, height);
       ctx.font = '400 9px "Oxanium", sans-serif';
       ctx.textBaseline = 'top';
       ctx.fillStyle = '#aaa';
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 4;
       for (let tick = 0; tick <= 4; tick++) {
         ctx.textAlign = tick === 0 ? 'left' : tick === 4 ? 'right' : 'center';
         const label = duration < 10 ? `${(duration * tick / 4).toFixed(1)} s` : time(duration * tick / 4);
-        ctx.fillText(label, left + width * tick / 4, 0);
+        ctx.fillText(label, 14 + (width - 28) * tick / 4, 9);
       }
+      ctx.shadowBlur = 0;
       ctx.textAlign = 'left';
       for (const [frequency, label] of [[16000, '16k Hz'], [2000, '2k'], [250, '250'], [32, '32 Hz']]) {
-        const y = top + (1 - Math.log(frequency / 32) / Math.log(500)) * (height - 10);
+        const y = Math.max(24, Math.min(height - 18, (1 - Math.log(frequency / 32) / Math.log(500)) * height));
         ctx.fillStyle = '#050505c9';
-        ctx.fillRect(left + 1, y, 38, 11);
+        ctx.fillRect(10, y, 38, 11);
         ctx.fillStyle = '#c5c5c5';
-        ctx.fillText(label, left + 4, y + 1);
+        ctx.fillText(label, 14, y + 1);
       }
     }
 

@@ -138,6 +138,8 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .player-spectrum[data-state="paused"] { opacity: .64; }
 .player-spectrum[data-state="idle"], .player-spectrum[data-state="unavailable"] { opacity: 0; }
 .player[data-spectrum-view="2d"] .spectrum-scale { visibility: hidden; }
+.player[data-spectrum-view="2d"] .player-spectrum { inset: 0; }
+.player[data-spectrum-view="2d"]::before { background: linear-gradient(180deg,#07070718 0%,#07070724 70%,#07070766 100%); }
 .player[data-spectrum-view="2d"] .player-spectrum[data-state="paused"] { opacity: .8; }
 .spectrum-switch { display: inline-flex; align-items: center; flex-shrink: 0; gap: 2px; padding: 3px; border-radius: 8px; background: #080808d9; }
 .spectrum-switch button { min-width: 31px; min-height: 28px; padding: 5px 6px; border-radius: 5px; color: #909090; background: transparent; font: 500 10px/1 var(--numerals); }
