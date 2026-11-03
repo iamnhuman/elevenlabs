@@ -25,7 +25,8 @@
 
   class PlayerSpectrum {
     constructor(element, audio, {
-      Visual = root.Spectrogram3D,
+      Visual = root.SpectrogramView,
+      mode = '3d',
       document = root.document,
       motion = root.matchMedia?.('(prefers-reduced-motion: reduce)'),
       load = sample => loadRecording(sample, document),
@@ -40,6 +41,7 @@
       this.frame = 0;
       this.epoch = 0;
       this.lastPaint = -Infinity;
+      this.mode = mode === '2d' ? '2d' : '3d';
       element.dataset.state = 'idle';
       this.syncState = () => this.sync();
       ['playing', 'pause', 'ended', 'volumechange', 'seeking', 'seeked', 'loadedmetadata', 'error'].forEach(event => audio.addEventListener(event, this.syncState));
@@ -57,10 +59,11 @@
       this.visual?.clear();
       this.element.dataset.state = 'loading';
       try {
-        this.visualPromise ||= Promise.resolve(this.Visual.create(this.element)).catch(error => { this.visualPromise = null; throw error; });
+        this.visualPromise ||= Promise.resolve(this.Visual.create(this.element, this.mode)).catch(error => { this.visualPromise = null; throw error; });
         const [visual, recording] = await Promise.all([this.visualPromise, this.load(sample)]);
         if (epoch !== this.epoch) return;
         this.visual = visual;
+        this.visual.setMode?.(this.mode);
         this.recording = recording;
         this.sync();
       } catch (error) {
@@ -73,6 +76,12 @@
     paint() {
       if (!this.visual || !this.recording) return;
       this.visual.show(this.recording, this.audio.currentTime || 0, this.audio.muted ? 0 : this.audio.volume);
+    }
+
+    setMode(mode) {
+      this.mode = mode === '2d' ? '2d' : '3d';
+      this.visual?.setMode?.(this.mode);
+      this.sync();
     }
 
     sync() {

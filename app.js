@@ -27,7 +27,17 @@
   const sectionOf = sample => sample.duration > 30 ? 'track' : 'samples';
   let visible = [...samples];
   const shuffledOrders = new Map();
-  const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio);
+  const savedSpectrumView = storage.get('spectrum-view', '3d');
+  const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio, { mode: savedSpectrumView });
+  function setSpectrumView(mode, persist = true) {
+    mode = mode === '2d' ? '2d' : '3d';
+    spectrum.setMode(mode);
+    $('.player').dataset.spectrumView = mode;
+    $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.spectrumView === mode)));
+    if (persist) storage.set('spectrum-view', mode);
+  }
+  $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.addEventListener('click', () => setSpectrumView(button.dataset.spectrumView)));
+  setSpectrumView(savedSpectrumView, false);
   let progressFrame = 0;
   let lastProgressTime = 0;
   let lastPlayerId = null;

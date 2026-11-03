@@ -7,7 +7,7 @@ function fixture({ reduced = false, load } = {}) {
   const document = Object.assign(new EventTarget(), { hidden: false });
   const motion = Object.assign(new EventTarget(), { matches: reduced });
   const element = { dataset: {} }, frames = new Map();
-  const visual = { paints: [], clears: 0, show(...args) { this.paints.push(args); }, clear() { this.clears++; } };
+  const visual = { paints: [], clears: 0, setMode(mode) { this.mode = mode; }, show(...args) { this.paints.push(args); }, clear() { this.clears++; } };
   let id = 0, creates = 0;
   const recording = { bins: 64, rate: 24, frames: 100, data: new Uint8Array(6400).fill(200) };
   const spectrum = new PlayerSpectrum(element, audio, {
@@ -108,4 +108,28 @@ test('reduced motion limits updates and preference changes restart only one fram
   f.step(200); assert.equal(f.visual.paints.length, before + 1);
   f.motion.matches = false; f.fire(f.motion, 'change');
   assert.equal(f.frames.size, 1);
+});
+
+test('changing spectrum mode preserves playback time and keeps exactly one animation loop', async () => {
+  const f = fixture(); await f.play();
+  for (const mode of ['2d', '3d', '2d']) {
+    f.spectrum.setMode(mode);
+    assert.equal(f.visual.mode, mode);
+    assert.equal(f.visual.paints.at(-1)[1], 2);
+    assert.equal(f.audio.currentTime, 2);
+    assert.equal(f.audio.paused, false);
+    assert.equal(f.frames.size, 1);
+  }
+  assert.equal(f.creates(), 1);
+  f.audio.paused = true; f.fire(f.audio, 'pause');
+  f.spectrum.setMode('3d');
+  assert.equal(f.frames.size, 0, 'Switching while paused cannot start idle animation');
+});
+
+test('a mode changed during data loading is applied when the spectrum becomes ready', async () => {
+  const f = fixture();
+  const pending = f.spectrum.select({ id: 'a' });
+  f.spectrum.setMode('2d');
+  await pending;
+  assert.equal(f.visual.mode, '2d');
 });

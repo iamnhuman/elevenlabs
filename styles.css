@@ -137,6 +137,12 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .player-spectrum canvas { display: block; width: 100% !important; height: 100% !important; }
 .player-spectrum[data-state="paused"] { opacity: .64; }
 .player-spectrum[data-state="idle"], .player-spectrum[data-state="unavailable"] { opacity: 0; }
+.player[data-spectrum-view="2d"] .spectrum-scale { visibility: hidden; }
+.player[data-spectrum-view="2d"] .player-spectrum[data-state="paused"] { opacity: .8; }
+.spectrum-switch { display: inline-flex; align-items: center; flex-shrink: 0; gap: 2px; padding: 3px; border-radius: 8px; background: #080808d9; }
+.spectrum-switch button { min-width: 31px; min-height: 28px; padding: 5px 6px; border-radius: 5px; color: #909090; background: transparent; font: 500 10px/1 var(--numerals); }
+.spectrum-switch button:hover { color: #fff; background: #ffffff0c; }
+.spectrum-switch button[aria-pressed="true"] { color: #f2f2f2; background: #ffffff20; }
 .spectrum-scale { position: absolute; z-index: 2; top: 9px; left: 18px; right: 18px; height: 10px; pointer-events: none; color: #858585; font: 400 9px/1 var(--numerals); }
 .spectrum-scale span { position: absolute; transform: translateX(-50%); }
 .spectrum-scale span:first-child { transform: none; }

@@ -126,12 +126,14 @@
     }
 
     useSoftwareRenderer() {
+      const mounted = !this.canvas || this.canvas.parentNode === this.element;
       this.software = true;
       this.renderer?.dispose();
       this.renderer = null;
       this.canvas = this.element.ownerDocument.createElement('canvas');
       this.ctx = this.canvas.getContext('2d');
-      this.element.replaceChildren(this.canvas);
+      // A cached, inactive 3D canvas must not replace the visible 2D canvas.
+      if (mounted) this.element.replaceChildren(this.canvas);
     }
 
     resize() {
