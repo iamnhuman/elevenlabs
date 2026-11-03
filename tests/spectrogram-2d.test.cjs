@@ -32,6 +32,7 @@ test('the flat spectrogram maps time left-to-right and low frequencies below hig
   assert.deepEqual(pixel(0, 0), [0, 0, 0, 255], 'Silent bands stay black');
   assert.deepEqual(f.ctx.drawnImage.slice(1), [0, 0, 1200, 165], 'The heat map fills the player edge to edge');
   assert.equal(f.ctx.rectangles[1][0], .25 * 1200, 'Playback cursor follows audio time');
+  assert.equal(f.ctx.imageSmoothingEnabled, false, 'The measured texture is not blurred when scaled');
 });
 
 test('cursor movement reuses the FFT image; muting removes its energy', () => {
@@ -49,4 +50,29 @@ test('flat heat colors include violet lows, red mids and yellow-white peaks', ()
   assert.ok(violet[2] > violet[0] && violet[2] > violet[1]);
   assert.ok(red[0] > red[1] * 5 && red[0] > red[2] * 5);
   assert.ok(hot[0] === 255 && hot[1] === 255 && hot[2] > 200);
+});
+
+test('high-resolution recordings keep more than 2048 time columns and all 256 frequency bands', () => {
+  const f = fixture();
+  const recording = { frames: 3000, bins: 256, rate: 96, minDb: -96, maxDb: -12, data: new Uint8Array(3000 * 256) };
+  recording.data[1500 * 256 + 128] = 255;
+  f.visual.show(recording, 15, 1);
+  const image = f.imageCtx.images[0];
+  assert.equal(image.width, 3000);
+  assert.equal(image.height, 256);
+  const pixel = ((255 - 128) * 3000 + 1500) * 4;
+  assert.deepEqual([...image.data.slice(pixel, pixel + 3)], [255, 255, 225]);
+});
+
+test('the 2D canvas uses the full Retina pixel ratio', () => {
+  const previous = globalThis.devicePixelRatio;
+  try {
+    globalThis.devicePixelRatio = 2;
+    const f = fixture();
+    assert.equal(f.visual.canvas.width, 2400);
+    assert.equal(f.visual.canvas.height, 330);
+  } finally {
+    if (previous === undefined) delete globalThis.devicePixelRatio;
+    else globalThis.devicePixelRatio = previous;
+  }
 });

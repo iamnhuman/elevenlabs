@@ -9,7 +9,7 @@
       const stored = root.SAMPLE_SPECTRA?.[sample.id];
       if (stored) { resolve(decode(stored)); return; }
       const script = document.createElement('script');
-      script.src = `assets/spectrum/${encodeURIComponent(sample.id)}.js`;
+      script.src = `assets/spectrum/${encodeURIComponent(sample.id)}.js?v=2`;
       script.onload = () => {
         script.remove();
         const entry = root.SAMPLE_SPECTRA?.[sample.id];
@@ -26,7 +26,7 @@
   class PlayerSpectrum {
     constructor(element, audio, {
       Visual = root.SpectrogramView,
-      mode = '3d',
+      mode = '2d',
       document = root.document,
       motion = root.matchMedia?.('(prefers-reduced-motion: reduce)'),
       load = sample => loadRecording(sample, document),
@@ -41,7 +41,7 @@
       this.frame = 0;
       this.epoch = 0;
       this.lastPaint = -Infinity;
-      this.mode = mode === '2d' ? '2d' : '3d';
+      this.mode = mode === '3d' ? '3d' : '2d';
       element.dataset.state = 'idle';
       this.syncState = () => this.sync();
       ['playing', 'pause', 'ended', 'volumechange', 'seeking', 'seeked', 'loadedmetadata', 'error'].forEach(event => audio.addEventListener(event, this.syncState));
@@ -79,7 +79,7 @@
     }
 
     setMode(mode) {
-      this.mode = mode === '2d' ? '2d' : '3d';
+      this.mode = mode === '3d' ? '3d' : '2d';
       this.visual?.setMode?.(this.mode);
       this.sync();
     }

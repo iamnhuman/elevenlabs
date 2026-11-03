@@ -42,7 +42,7 @@
     resize() {
       this.width = this.element.clientWidth || 1000;
       this.height = this.element.clientHeight || 160;
-      const ratio = Math.min(root.devicePixelRatio || 1, 1.5);
+      const ratio = Math.min(root.devicePixelRatio || 1, 3);
       this.canvas.width = Math.round(this.width * ratio);
       this.canvas.height = Math.round(this.height * ratio);
       this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -50,11 +50,12 @@
     }
 
     buildImage(recording, volume) {
-      const width = Math.min(recording.frames, 2048), bins = recording.bins;
+      const width = Math.min(recording.frames, 8192), bins = recording.bins;
       this.image.width = width;
       this.image.height = bins;
       const pixels = this.imageCtx.createImageData(width, bins);
-      const offset = volume > 0 ? 20 * Math.log10(volume) / 65 * 255 : -255;
+      const range = (recording.maxDb ?? -25) - (recording.minDb ?? -90);
+      const offset = volume > 0 ? 20 * Math.log10(volume) / range * 255 : -255;
       for (let x = 0; x < width; x++) {
         const first = Math.floor(x * recording.frames / width);
         const end = Math.max(first + 1, Math.floor((x + 1) * recording.frames / width));
@@ -88,7 +89,7 @@
       ctx.clearRect(0, 0, this.width, this.height);
       if (!this.recording) return;
       const left = 0, top = 0, width = this.width, height = this.height;
-      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(this.image, left, top, width, height);
       const duration = this.recording.frames / this.recording.rate;
       const cursor = left + clamp(this.seconds / duration) * width;

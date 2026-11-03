@@ -4,7 +4,7 @@
   class SpectrogramView {
     static create(element, mode) { return new SpectrogramView(element, mode); }
 
-    constructor(element, mode = '3d', { ThreeD = root.Spectrogram3D, TwoD = root.Spectrogram2D } = {}) {
+    constructor(element, mode = '2d', { ThreeD = root.Spectrogram3D, TwoD = root.Spectrogram2D } = {}) {
       this.element = element;
       this.factories = { '3d': ThreeD, '2d': TwoD };
       this.views = new Map();
@@ -15,7 +15,7 @@
     get software() { return Boolean(this.active.software); }
 
     setMode(mode) {
-      mode = mode === '2d' ? '2d' : '3d';
+      mode = mode === '3d' ? '3d' : '2d';
       if (mode === this.mode) return;
       if (!this.views.has(mode)) this.views.set(mode, this.factories[mode].create(this.element));
       this.mode = mode;

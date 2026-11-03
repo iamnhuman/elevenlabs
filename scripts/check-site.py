@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check the static catalogue and optionally all HTTP asset URLs (no browser)."""
 import argparse
+import base64
 from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 import json
@@ -77,11 +78,16 @@ def main():
     assert all(sum(c["sheet"] == i for c in art["cards"]) == 25 for i in range(8))
     paths = list(dict.fromkeys(paths))
     spectra = json.loads((ROOT / "assets/spectrum/manifest.json").read_text())
-    assert spectra["bins"] == 64 and spectra["rate"] == 24
+    assert spectra["version"] == 2 and spectra["bins"] == 256 and spectra["rate"] == 96
     assert {item["id"] for item in spectra["samples"]} == {item["id"] for item in samples}
     paths.append("assets/spectrum/manifest.json")
     for item in spectra["samples"]:
         assert (ROOT / item["file"]).stat().st_size == item["bytes"]
+        entry = json.loads((ROOT / item["file"]).read_text().split(f'window.SAMPLE_SPECTRA["{item["id"]}"] = ', 1)[1].rstrip(';\n'))
+        assert entry["version"] == 2 and entry["bins"] == spectra["bins"] and entry["rate"] == spectra["rate"]
+        assert entry["frames"] == item["frames"]
+        assert len(base64.b64decode(entry["values"], validate=True)) == entry["frames"] * entry["bins"]
+        assert entry["minDb"] == spectra["minDb"] and entry["maxDb"] == spectra["maxDb"]
         paths.append(item["file"])
     numbers = {"track": 0, "samples": 0}
     artwork_numbers = set()

@@ -24,6 +24,7 @@ function fixture({ reduced = false, load } = {}) {
 
 test('spectrum follows the audio clock without an AudioContext, ESM or an extra speaker route', async () => {
   const f = fixture(); await f.play(); f.step(100);
+  assert.equal(f.spectrum.mode, '2d', 'The default is the flat spectrogram');
   assert.equal(f.element.dataset.state, 'live');
   assert.equal(f.visual.paints.at(-1)[0], f.recording);
   assert.equal(f.visual.paints.at(-1)[1], 2);

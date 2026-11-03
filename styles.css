@@ -141,6 +141,7 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .player[data-spectrum-view="2d"] .player-spectrum { inset: 0; }
 .player[data-spectrum-view="2d"]::before { background: linear-gradient(180deg,#07070718 0%,#07070724 70%,#07070766 100%); }
 .player[data-spectrum-view="2d"] .player-spectrum[data-state="paused"] { opacity: .8; }
+.player[data-spectrum-view="2d"] .transport { backdrop-filter: none; -webkit-backdrop-filter: none; }
 .spectrum-switch { display: inline-flex; align-items: center; flex-shrink: 0; gap: 2px; padding: 3px; border-radius: 8px; background: #080808d9; }
 .spectrum-switch button { min-width: 31px; min-height: 28px; padding: 5px 6px; border-radius: 5px; color: #909090; background: transparent; font: 500 10px/1 var(--numerals); }
 .spectrum-switch button:hover { color: #fff; background: #ffffff0c; }
@@ -159,7 +160,7 @@ kbd { font-family: var(--display); display: inline-flex; justify-content: center
 .transport-buttons .icon { width: 17px; height: 17px; }
 .transport-buttons .icon-button { width: 32px; height: 36px; border: 0; border-radius: 7px; background: transparent; color: #c9c9c9; }
 .transport-buttons .icon-button:hover, .transport-buttons .icon-button[aria-pressed="true"] { color: #fff; background: #ffffff20; }
-.player-play { width: 44px; height: 40px; padding: 0; display: grid; place-items: center; background: linear-gradient(145deg,#fff,#b5b5b5); box-shadow: inset 0 1px #fff; color: #080808; border: 0; border-radius: 0; clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px); }
+.player-play { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; background: linear-gradient(145deg,#fff,#b5b5b5); box-shadow: inset 0 1px #fff; color: #080808; border: 0; border-radius: 50%; clip-path: none; }
 .player-play:hover { background: #fff; }
 .player-timeline { grid-area: timeline; display: flex; align-items: center; gap: 12px; padding-top: 5px; }
 .player-timeline time { color: #c0c0c0; width: 32px; flex-shrink: 0; text-align: center; font: 400 10px var(--numerals); font-variant-numeric: tabular-nums; }

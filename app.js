@@ -27,10 +27,10 @@
   const sectionOf = sample => sample.duration > 30 ? 'track' : 'samples';
   let visible = [...samples];
   const shuffledOrders = new Map();
-  const savedSpectrumView = storage.get('spectrum-view', '3d');
+  const savedSpectrumView = storage.get('spectrum-view', '2d');
   const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio, { mode: savedSpectrumView });
   function setSpectrumView(mode, persist = true) {
-    mode = mode === '2d' ? '2d' : '3d';
+    mode = mode === '3d' ? '3d' : '2d';
     spectrum.setMode(mode);
     $('.player').dataset.spectrumView = mode;
     $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.spectrumView === mode)));

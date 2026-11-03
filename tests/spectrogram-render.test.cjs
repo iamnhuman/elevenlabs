@@ -15,7 +15,8 @@ test('the shipped classic Three.js bundle projects an actual MP3 spectrum into t
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', first.file), 'utf8'), { window: dataWindow });
   const recording = dataWindow.SAMPLE_SPECTRA[first.id];
   recording.data = new Uint8Array(Buffer.from(recording.values, 'base64'));
-  assert.equal(recording.data.length, recording.frames * 64);
+  assert.equal(recording.data.length, recording.frames * recording.bins);
+  assert.equal(recording.bins, 256, 'The published data contains the measured high-resolution spectrum');
   const polygons = [];
   let points = [];
   const ctx = {
