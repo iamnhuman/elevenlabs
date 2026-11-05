@@ -39,9 +39,9 @@
     $('#enable-visual').hidden = mode !== '2d';
     $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.spectrumView === mode)));
     if (persist) storage.set('spectrum-view', mode);
+    syncVisualForMode();
   }
   $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.addEventListener('click', () => setSpectrumView(button.dataset.spectrumView)));
-  setSpectrumView(savedSpectrumView, false);
   let progressFrame = 0;
   let lastProgressTime = 0;
   let lastPlayerId = null;
@@ -87,11 +87,17 @@
       }
     },
   });
+  function syncVisualForMode() {
+    if (!visualAudio.sample || !visualAudio.available) return;
+    const requested = spectrum.mode === '2d' && visualEnabled;
+    if (requested !== (visualAudio.enabled || visualAudio.busy)) void visualAudio.toggle();
+  }
   $('#enable-visual').addEventListener('click', () => {
     if (!visualAudio.available) return;
     visualEnabled = !(visualAudio.enabled || visualAudio.busy);
-    void visualAudio.toggle();
+    syncVisualForMode();
   });
+  setSpectrumView(savedSpectrumView, false);
 
   // Refresh the current waveform and timeline while audio is playing.
   function paintProgress(timestamp = 0) {
@@ -119,7 +125,7 @@
     visualAudio.select(sample);
     void spectrum.select(sample);
     void player.select(sample, options);
-    if (changed && visualEnabled) void visualAudio.toggle();
+    if (changed) syncVisualForMode();
   }
 
   function togglePlayback() {

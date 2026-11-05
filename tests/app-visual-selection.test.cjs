@@ -99,28 +99,83 @@ test('2D and visual start enabled by default, then manual choices survive track 
   f.effect.cancel();
 });
 
-test('each fresh visit enables visual on the first sample, then respects manual changes', () => {
+test('each fresh visit enables visual in 2D and respects saved modes and manual changes', () => {
   for (const mode of ['1d', '2d', '3d']) {
     const saved = new Map([['sample-room:spectrum-view', JSON.stringify(mode)], ['sample-room:visual-enabled', 'false']]);
     const f = fixture(saved);
     f.select(0);
     assert.equal(f.spectrum.mode, mode);
-    assert.equal(f.jobs.length, 1, 'The first sample enables visual even if a previous visit saved it as off');
-    assert.equal(f.button.attributes['aria-pressed'], 'true');
+    assert.equal(f.jobs.length, mode === '2d' ? 1 : 0, 'Only 2D generates spectral artwork');
+    assert.equal(f.button.attributes['aria-pressed'], String(mode === '2d'));
+    assert.equal(f.button.hidden, mode !== '2d');
+    f.modes[1].click();
+    assert.equal(f.jobs.length, 1, 'Entering 2D enables visual even if a previous visit saved it as off');
     f.button.click();
     f.document.querySelector('#next').click();
-    assert.equal(f.spectrum.mode, mode);
+    assert.equal(f.spectrum.mode, '2d');
     assert.equal(f.jobs.length, 1, 'Subsequent samples keep the manual off choice');
     assert.equal(f.button.attributes['aria-pressed'], 'false');
-    assert.equal(f.button.hidden, mode !== '2d');
+    assert.equal(f.button.hidden, false);
 
     const reopened = fixture(saved);
     reopened.select(1);
-    assert.equal(reopened.spectrum.mode, mode);
+    assert.equal(reopened.spectrum.mode, '2d');
     assert.equal(reopened.jobs.length, 1, 'Opening the site again starts the first sample with visual on');
     assert.equal(reopened.button.attributes['aria-pressed'], 'true');
     reopened.effect.cancel();
   }
+});
+
+test('1D and 3D restore the original audio and FFT, then 2D reuses enabled artwork', async () => {
+  const f = fixture();
+  f.select(0);
+  f.jobs[0].resolve({ blob: {}, recording: { artwork: true } });
+  await new Promise(setImmediate);
+  f.audio.duration = 8; f.audio.readyState = 1; f.audio.emit('loadedmetadata');
+  f.audio.currentTime = 3; f.audio.pause();
+  for (const mode of [0, 2]) {
+    f.modes[mode].click();
+    await new Promise(setImmediate);
+    assert.equal(f.effect.enabled, false);
+    assert.equal(f.audio.src, 'a.mp3');
+    assert.equal(f.spectrum.recording, null, 'Other modes load the original measured FFT');
+    assert.equal(f.button.hidden, true);
+    assert.equal(f.audio.currentTime, 3);
+    assert.equal(f.audio.paused, true);
+    f.modes[1].click();
+    await new Promise(setImmediate);
+    assert.equal(f.effect.enabled, true);
+    assert.equal(f.audio.src, 'blob:visual');
+    assert.equal(f.spectrum.recording.artwork, true);
+    assert.equal(f.jobs.length, 1, 'Returning to 2D reuses the processed recording');
+    assert.equal(f.audio.currentTime, 3);
+    assert.equal(f.audio.paused, true);
+  }
+  f.button.click();
+  f.modes[2].click(); f.modes[1].click();
+  assert.equal(f.effect.enabled, false, 'A manual off choice also survives mode changes');
+  assert.equal(f.audio.src, 'a.mp3');
+});
+
+test('leaving 2D cancels generation and new tracks stay original in other modes', async () => {
+  const f = fixture();
+  f.select(0);
+  f.modes[2].click();
+  assert.equal(f.jobs[0].options.signal.aborted, true);
+  assert.equal(f.effect.busy, false);
+  f.jobs[0].resolve({ blob: {}, recording: { stale: true } });
+  await new Promise(setImmediate);
+  assert.equal(f.audio.src, 'a.mp3');
+  assert.equal(f.effect.enabled, false);
+  f.document.querySelector('#next').click();
+  assert.equal(f.audio.src, 'b.mp3');
+  assert.equal(f.jobs.length, 1, 'Selecting a track in 3D does not start image synthesis');
+  f.modes[1].click();
+  assert.equal(f.jobs.length, 2);
+  f.jobs[1].resolve({ blob: {}, recording: { current: true } });
+  await new Promise(setImmediate);
+  assert.equal(f.effect.enabled, true);
+  assert.equal(f.spectrum.recording.current, true);
 });
 
 test('cancelling visual generation keeps it disabled for the next track', async () => {
