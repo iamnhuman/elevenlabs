@@ -87,7 +87,6 @@ test('2D and visual start enabled by default, then manual choices survive track 
   assert.equal(f.button.attributes['aria-pressed'], 'false');
   assert.equal(f.audio.src, 'b.mp3');
   assert.equal(f.jobs.length, 1, 'Disabling visual persists when selecting the next track');
-  assert.equal(f.saved.get('sample-room:visual-enabled'), 'false');
 
   f.modes[1].click();
   f.button.click();
@@ -96,19 +95,30 @@ test('2D and visual start enabled by default, then manual choices survive track 
   f.document.querySelector('#player-random').click();
   assert.equal(f.spectrum.mode, '2d');
   assert.equal(f.jobs.length, 3, 'Re-enabling visual applies to subsequent tracks');
-  assert.equal(f.saved.get('sample-room:visual-enabled'), 'true');
   f.effect.cancel();
 });
 
-test('saved visualization mode and disabled visual survive reload and sample selection', () => {
+test('each fresh visit enables visual on the first sample, then respects manual changes', () => {
   for (const mode of ['1d', '2d', '3d']) {
-    const f = fixture(new Map([['sample-room:spectrum-view', JSON.stringify(mode)], ['sample-room:visual-enabled', 'false']]));
+    const saved = new Map([['sample-room:spectrum-view', JSON.stringify(mode)], ['sample-room:visual-enabled', 'false']]);
+    const f = fixture(saved);
     f.select(0);
+    assert.equal(f.spectrum.mode, mode);
+    assert.equal(f.jobs.length, 1, 'The first sample enables visual even if a previous visit saved it as off');
+    assert.equal(f.button.attributes['aria-pressed'], 'true');
+    f.button.click();
     f.document.querySelector('#next').click();
     assert.equal(f.spectrum.mode, mode);
-    assert.equal(f.jobs.length, 0);
+    assert.equal(f.jobs.length, 1, 'Subsequent samples keep the manual off choice');
     assert.equal(f.button.attributes['aria-pressed'], 'false');
     assert.equal(f.button.hidden, mode !== '2d');
+
+    const reopened = fixture(saved);
+    reopened.select(1);
+    assert.equal(reopened.spectrum.mode, mode);
+    assert.equal(reopened.jobs.length, 1, 'Opening the site again starts the first sample with visual on');
+    assert.equal(reopened.button.attributes['aria-pressed'], 'true');
+    reopened.effect.cancel();
   }
 });
 

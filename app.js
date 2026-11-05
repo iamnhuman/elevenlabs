@@ -29,7 +29,8 @@
   let visible = [...samples];
   const shuffledOrders = new Map();
   const savedSpectrumView = storage.get('spectrum-view', '2d');
-  let visualEnabled = storage.get('visual-enabled', true) === true;
+  // A fresh page visit starts with Visual on; manual changes last for this visit.
+  let visualEnabled = true;
   const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio, { mode: savedSpectrumView });
   function setSpectrumView(mode, persist = true) {
     mode = ['1d', '2d', '3d'].includes(mode) ? mode : '2d';
@@ -90,7 +91,6 @@
   $('#enable-visual').addEventListener('click', () => {
     if (!visualAudio.available) return;
     visualEnabled = !(visualAudio.enabled || visualAudio.busy);
-    storage.set('visual-enabled', visualEnabled);
     void visualAudio.toggle();
   });
 
