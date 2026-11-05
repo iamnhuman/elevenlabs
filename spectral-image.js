@@ -48,7 +48,7 @@
     if (signal.aborted) throw aborted();
     const channels = Array.from({ length: audio.numberOfChannels }, (_, i) => audio.getChannelData(i).slice());
     return new Promise((resolve, reject) => {
-      const worker = new root.Worker('spectral-image-worker.js');
+      const worker = new root.Worker('spectral-image-worker.js?v=35085551f701');
       const cleanup = () => { worker.terminate(); signal.removeEventListener('abort', cancel); };
       const cancel = () => { cleanup(); reject(aborted()); };
       signal.addEventListener('abort', cancel, { once: true });

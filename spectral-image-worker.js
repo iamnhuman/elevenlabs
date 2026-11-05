@@ -1,5 +1,5 @@
 /* Expensive synthesis and FFT analysis stay off the interface thread. */
-importScripts('spectral-image-dsp.js');
+importScripts('spectral-image-dsp.js?v=629f239f5cb8');
 self.onmessage = ({ data: { channels, image, viewport = {} } }) => {
   try {
     const progress = value => self.postMessage({ progress: Math.round(value * 100) });

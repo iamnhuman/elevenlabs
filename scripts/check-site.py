@@ -2,6 +2,7 @@
 """Check the static catalogue and optionally all HTTP asset URLs (no browser)."""
 import argparse
 import base64
+import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 import json
@@ -12,6 +13,10 @@ from urllib.parse import unquote, urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def local_file(url):
+    return ROOT / unquote(urlsplit(url).path)
 
 
 class Page(HTMLParser):
@@ -47,6 +52,9 @@ def main():
     page = Page()
     page.feed((ROOT / "index.html").read_text())
     assert set(page.links) <= page.ids, "Missing fragment targets"
+    for source, dependency in [("spectral-image.js", "spectral-image-worker.js"), ("spectral-image-worker.js", "spectral-image-dsp.js")]:
+        version = hashlib.sha256((ROOT / dependency).read_bytes()).hexdigest()[:12]
+        assert f"{dependency}?v={version}" in (ROOT / source).read_text(), f"Stale worker import; run python3 scripts/version-assets.py: {source}"
     paths = ["index.html", ".nojekyll", *page.assets]
     paths.extend(re.findall(r'url\([\'"]?([^\'")]+)', (ROOT / "styles.css").read_text()))
     paths.extend([
@@ -113,7 +121,10 @@ def main():
     for path in paths:
         assert not path.startswith("/"), f"Absolute path breaks project Pages: {path}"
         assert not urlsplit(path).scheme, f"Unexpected remote dependency: {path}"
-        assert (ROOT / unquote(path)).is_file(), f"Missing: {path}"
+        assert local_file(path).is_file(), f"Missing: {path}"
+        if path in page.assets and urlsplit(path).path.endswith(('.js', '.css')):
+            version = hashlib.sha256(local_file(path).read_bytes()).hexdigest()[:12]
+            assert urlsplit(path).query == f'v={version}', f"Stale asset URL; run python3 scripts/version-assets.py: {path}"
         assert urljoin("https://example.github.io/sample-room/", path).startswith("https://example.github.io/sample-room/")
     print(f"PASS: {len(samples)} samples, waveforms, original filenames, unique IDs and {len(paths)} local URLs.")
     if args.url:
@@ -121,7 +132,7 @@ def main():
         def check(path):
             with urlopen(Request(urljoin(base, path), method="HEAD"), timeout=10) as response:
                 assert response.status == 200, path
-                assert int(response.headers["Content-Length"]) == (ROOT / unquote(path)).stat().st_size, path
+                assert int(response.headers["Content-Length"]) == local_file(path).stat().st_size, path
                 if path.endswith(".mp3"):
                     assert response.headers["Content-Type"].startswith("audio/"), path
         with ThreadPoolExecutor(max_workers=8) as pool:
@@ -129,7 +140,7 @@ def main():
         # Verify actual seek bytes, suffix ranges and a representative original with Unicode/#.
         for sample in [samples[0], next(s for s in samples if "#" in s["filename"])]:
             for path in [sample["src"], sample["original"]]:
-                local = (ROOT / unquote(path)).read_bytes()
+                local = local_file(path).read_bytes()
                 for header, expected in [("bytes=100-199", local[100:200]), ("bytes=-64", local[-64:])]:
                     with urlopen(Request(urljoin(base, path), headers={"Range": header}), timeout=10) as response:
                         assert response.status == 206, "HTTP Range not supported"

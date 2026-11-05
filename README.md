@@ -38,6 +38,8 @@ python3 scripts/serve.py --port 8080
 
 Репозиторий: https://github.com/iamnhuman/elevenlabs. Настройка GitHub Pages:
 
+После изменений JS, CSS или каталога перед публикацией выполнить `python3 scripts/version-assets.py`. Скрипт добавляет хеш содержимого к адресам файлов в `index.html` и к цепочке загрузки Web Worker → DSP. Это предотвращает смешение нового HTML со старыми скриптами и стилями из кэша браузера. Пути остаются относительными; npm и сборщик не нужны. `scripts/check-site.py` проверяет актуальность этих хешей.
+
 1. Добавить файлы проекта в репозиторий, включая `samplepack/`, `assets/`, `samples.js` и `.nojekyll`.
 2. В **Settings → Pages → Build and deployment** выбрать **Deploy from a branch**.
 3. Выбрать ветку с сайтом и папку **/(root)**, сохранить.
