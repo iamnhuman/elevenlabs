@@ -44,6 +44,15 @@ class NumberingTests(unittest.TestCase):
         module.number_samples(rebuilt, sounds)
         self.assertEqual(rebuilt, sounds)
 
+    def test_deleting_samples_compacts_numbers_and_preserves_artwork_and_order(self):
+        previous = [sound("a", 15), sound("b", 3), sound("track", 120), sound("c", 8)]
+        module.number_samples(previous)
+        remaining = [sound("c", 8), sound("track", 120), sound("a", 15)]
+        module.number_samples(remaining, previous)
+        self.assertEqual([sample["id"] for sample in remaining], ["a", "track", "c"])
+        self.assertEqual([sample["title"] for sample in remaining], ["001", "001", "002"])
+        self.assertEqual([sample["artworkNumber"] for sample in remaining], [1, 3, 4])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -48,7 +48,10 @@ def main():
     catalogue = json.loads((ROOT / "samples.js").read_text().split("window.SAMPLE_LIBRARY = ", 1)[1].rstrip(";\n"))
     samples = catalogue["samples"]
     assert samples and len({s["id"] for s in samples}) == len(samples), "Duplicate or missing sample IDs"
-    assert len(samples) == len(list((ROOT / "samplepack").rglob("*.mp3"))), "Catalogue is stale"
+    source = ROOT / catalogue["source"]
+    expected_originals = {path.resolve() for path in source.rglob("*.mp3")}
+    actual_originals = {local_file(sample["original"]).resolve() for sample in samples}
+    assert actual_originals == expected_originals, "Catalogue does not match the selected source folder"
     page = Page()
     page.feed((ROOT / "index.html").read_text())
     assert set(page.links) <= page.ids, "Missing fragment targets"

@@ -8,7 +8,7 @@
   <title>elevenlabs test</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=1e7d33d63a35">
-  <script src="samples.js?v=b27aae82821d" defer></script>
+  <script src="samples.js?v=9b4a0a34643c" defer></script>
   <script src="assets/art/macro-200/artwork.js?v=450725fa14cd" defer></script>
   <script src="audio-player.js?v=1a352f430039" defer></script>
   <script src="assets/vendor/sonoscope/terrain.js?v=89e175fb1f5a" defer></script>
@@ -17,7 +17,7 @@
   <script src="spectrogram-1d.js?v=0328627c6e7a" defer></script>
   <script src="spectrogram-view.js?v=d86428b18234" defer></script>
   <script src="player-spectrum.js?v=04a0aa0fa587" defer></script>
-  <script src="spectral-image.js?v=0366d3772eec" defer></script>
+  <script src="spectral-image.js?v=9c13984ede89" defer></script>
   <script src="waveform.js?v=eba994537b82" defer></script>
   <script src="app.js?v=9c8b26f4c8b3" defer></script>
 </head>
@@ -57,11 +57,11 @@
 
     <main>
       <section class="collection" id="collection" aria-labelledby="collection-title">
-        <h1 id="collection-title" class="sr-only">samples</h1><span id="sample-count" class="sr-only">120</span>
+        <h1 id="collection-title" class="sr-only">samples</h1><span id="sample-count" class="sr-only">116</span>
         <div class="toolbar">
           <div class="filters" role="group" aria-label="Фильтр коллекции">
             <button class="filter" data-filter="track" aria-pressed="false">track <span data-count="track">1</span></button>
-            <button class="filter active" data-filter="samples" aria-pressed="true">samples <span data-count="samples">120</span></button>
+            <button class="filter active" data-filter="samples" aria-pressed="true">samples <span data-count="samples">116</span></button>
           </div>
           <div class="toolbar-right">
             <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" inputmode="numeric" placeholder="Номер звука" aria-label="Поиск по номеру семпла" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
@@ -74,7 +74,7 @@
           </div>
         </div>
         <div class="list-tools">
-          <div class="list-info"><span id="result-label" role="status">120 семплов</span><span class="collection-meta" id="collection-meta">До 30 секунд</span></div>
+          <div class="list-info"><span id="result-label" role="status">116 семплов</span><span class="collection-meta" id="collection-meta">До 30 секунд</span></div>
           <label class="sort-control"><span class="sr-only">Сортировка</span><select id="sort"><option value="default">По номеру</option><option value="short">Сначала короткие</option><option value="long">Сначала длинные</option><option value="shuffle">Случайный порядок</option></select></label>
         </div>
         <div class="sound-canvas" id="sound-canvas">
@@ -86,7 +86,7 @@
           <button class="secondary-button" id="reset-filters">Сбросить поиск</button>
         </div>
         </div>
-        <noscript><p class="noscript-message">Для плеера нужен JavaScript. <a href="samplepack/">Открыть папку с оригиналами</a>.</p></noscript>
+        <noscript><p class="noscript-message">Для плеера нужен JavaScript. <a href="sound/samplepack%20sfx%20v3/">Открыть папку с оригиналами</a>.</p></noscript>
         <footer class="collection-footer"><span class="footer-hint"><span class="pointer-hint">Нажми на карточку, чтобы слушать. Волна — для перемотки.</span><span class="touch-hint">Нажми на карточку, чтобы слушать.</span></span><span class="footer-shortcuts"><kbd>space</kbd> пауза <kbd>↑</kbd><kbd>↓</kbd> сменить звук <kbd>V</kbd> сменить вид</span></footer>
       </section>
     </main>

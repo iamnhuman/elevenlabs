@@ -73,6 +73,32 @@ test('short tiles repeat in the actual PCM with the same time and frequency orie
   assert.ok(output[0].every(value => Number.isFinite(value) && Math.abs(value) <= .961));
 });
 
+test('a three-second sample contains two clear drawings separated by a real spectral gap', () => {
+  const duration = 3, options = DSP.tileLayout(duration, 2400, 160);
+  assert.equal(options.repeats, 2);
+  const image = { width: 2, height: 2, pixels: Float32Array.from([1, 0, 0, 1]) };
+  const output = DSP.synthesize([new Float32Array(duration * DSP.SAMPLE_RATE)], image, undefined, undefined, options);
+  const recording = DSP.measure(output, undefined, undefined, options);
+  const level = (seconds, frequency) => recording.data[Math.round(seconds * recording.rate) * recording.bins + Math.round(Math.log(frequency / 32) / Math.log(500) * (recording.bins - 1))];
+  for (let tile = 0; tile < 2; tile++) {
+    const cell = duration / options.repeats;
+    const early = (tile + options.gap / 2 + .2 * (1 - options.gap)) * cell;
+    const late = (tile + options.gap / 2 + .8 * (1 - options.gap)) * cell;
+    assert.ok(level(early, 6000) > level(late, 6000) + 30);
+    assert.ok(level(late, 350) > level(early, 350) + 30);
+  }
+  for (const gap of [.05, 1.5, 2.95]) {
+    assert.ok(level(gap, 6000) < level(.4, 6000) - 50, `No image energy in the gap at ${gap}s`);
+  }
+  assert.equal(output[0].length, duration * DSP.SAMPLE_RATE);
+});
+
+test('one-second and two-second samples contain a single drawing', () => {
+  for (const duration of [1, 2, 2.016]) assert.equal(DSP.tileLayout(duration, 2400, 160).repeats, 1);
+  for (const duration of [3, 3.024, 4]) assert.equal(DSP.tileLayout(duration, 2400, 160).repeats, 2);
+  assert.ok(DSP.tileLayout(15, 2400, 160).repeats > 2);
+});
+
 function fixture(generate = async () => ({ blob: {}, recording: { processed: true } })) {
   const sources = [], spectra = [], errors = [], revoked = [];
   const effect = new SpectralImage({ replaceSource: async src => sources.push(src) }, { select: async (...args) => spectra.push(args) }, {

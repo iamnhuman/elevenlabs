@@ -16,6 +16,15 @@
     return 2 ** clamp(Math.floor(Math.log2(seconds * SAMPLE_RATE / 16)), 11, 13);
   }
 
+  function tileLayout(seconds, width = 1000, height = 160) {
+    const gap = .22;
+    // Give each drawing enough audio time to retain horizontal detail.
+    const limit = seconds <= 2.1 ? 1 : seconds <= 4.1 ? 2 : Math.max(2, Math.floor(seconds / 1.25));
+    const repeats = Math.min(repeatCount(width * (1 - gap), height), limit);
+    const imageSeconds = seconds / repeats * (1 - gap);
+    return { repeats, gap, fftSize: tileFFTSize(imageSeconds) };
+  }
+
   class FFT {
     constructor(size) {
       this.size = size;
@@ -70,7 +79,7 @@
       + (p[y1 * w + x0] * (1 - dx) + p[y1 * w + x1] * dx) * dy;
   }
 
-  function synthesize(channels, image, sampleRate = SAMPLE_RATE, progress = () => {}, { repeats = 1, fftSize: size = SIZE } = {}) {
+  function synthesize(channels, image, sampleRate = SAMPLE_RATE, progress = () => {}, { repeats = 1, gap = 0, fftSize: size = SIZE } = {}) {
     const length = channels[0]?.length;
     if (!length || channels.some(channel => channel.length !== length) || !image?.pixels?.length) throw new Error('Invalid audio or artwork');
     const hop = size / 8;
@@ -79,8 +88,11 @@
     const re = new Float64Array(size), im = new Float64Array(size);
     const imageRe = new Float64Array(size / 2), imageIm = new Float64Array(size / 2), dry = new Float64Array(size / 2).fill(1);
     const rows = Float64Array.from({ length: size / 2 }, (_, bin) => 1 - Math.log(bin * sampleRate / size / MIN_FREQ) / Math.log(MAX_FREQ / MIN_FREQ));
+    const step = length / repeats, inset = step * clamp(gap, 0, .8) / 2;
     for (let center = 0; center < length + size / 2; center += hop) {
-      const x = (center / length * repeats) % 1;
+      const offset = center % step;
+      const x = clamp((offset - inset) / (step - 2 * inset));
+      const tileFade = gap > 0 ? clamp((offset - inset) / (sampleRate * .015)) * clamp((step - inset - offset) / (sampleRate * .015)) : 1;
       const fade = clamp(center / (sampleRate * .03)) * clamp((length - center) / (sampleRate * .03));
       imageRe.fill(0); imageIm.fill(0); dry.fill(1);
       for (let bin = 1; bin < size / 2; bin++) {
@@ -88,7 +100,7 @@
         if (y < 0 || y > 1) continue;
         const edge = clamp(y / .025) * clamp((1 - y) / .025) * fade;
         const light = brightness(image, x, y);
-        const magnitude = size / 4 * 10 ** ((-88 + light * 50) / 20) * edge;
+        const magnitude = size / 4 * 10 ** ((-88 + light * 50) / 20) * edge * tileFade;
         // Deterministic phases advance with the sample clock: no clicks at column boundaries.
         const phase = bin * bin * 2.399963229728653 + 2 * Math.PI * bin * (center - size / 2) / size;
         imageRe[bin] = magnitude * Math.cos(phase); imageIm[bin] = magnitude * Math.sin(phase);
@@ -158,7 +170,7 @@
     for (let i = 0; i < length; i++) for (let ch = 0; ch < count; ch++) view.setInt16(44 + (i * count + ch) * 2, Math.round(clamp(channels[ch][i], -1, 32767 / 32768) * 32768), true);
     return buffer;
   }
-  const api = { SAMPLE_RATE, MIN_FREQ, MAX_FREQ, FFT, repeatCount, tileFFTSize, grayscale, brightness, synthesize, measure, wav };
+  const api = { SAMPLE_RATE, MIN_FREQ, MAX_FREQ, FFT, repeatCount, tileFFTSize, tileLayout, grayscale, brightness, synthesize, measure, wav };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SpectralImageDSP = api;
 })(typeof self !== 'undefined' ? self : globalThis);
