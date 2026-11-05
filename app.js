@@ -23,8 +23,8 @@
   };
   let filter = 'samples';
   const views = ['cards', 'compact', 'list'];
-  let displayView = storage.get('view', 'cards');
-  if (!views.includes(displayView)) displayView = 'cards';
+  let displayView = storage.get('view', 'compact');
+  if (!views.includes(displayView)) displayView = 'compact';
   const sectionOf = sample => sample.duration > 30 ? 'track' : 'samples';
   let visible = [...samples];
   const shuffledOrders = new Map();
@@ -196,7 +196,7 @@
   });
 
   function setView(next, persist = true) {
-    displayView = views.includes(next) ? next : 'cards';
+    displayView = views.includes(next) ? next : 'compact';
     $('#sample-list').dataset.view = displayView;
     $('#sound-canvas').dataset.view = displayView;
     $$('.view-switch [data-view]').forEach(button => {

@@ -19,7 +19,7 @@
   <script src="player-spectrum.js?v=04a0aa0fa587" defer></script>
   <script src="spectral-image.js?v=0366d3772eec" defer></script>
   <script src="waveform.js?v=eba994537b82" defer></script>
-  <script src="app.js?v=d575914e683f" defer></script>
+  <script src="app.js?v=53a4fbbc743d" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#collection">К семплам</a>
@@ -66,8 +66,8 @@
           <div class="toolbar-right">
             <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" inputmode="numeric" placeholder="Номер звука" aria-label="Поиск по номеру семпла" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
             <div class="view-switch" role="group" aria-label="Вид отображения">
-              <button data-view="cards" aria-pressed="true" title="Карточки" aria-label="Карточки"><svg class="icon"><use href="#i-cards"/></svg><span>Карточки</span></button>
-              <button data-view="compact" aria-pressed="false" title="Плотная сетка — много мелких карточек" aria-label="Плотная сетка"><svg class="icon"><use href="#i-compact"/></svg><span>Плотно</span></button>
+              <button data-view="cards" aria-pressed="false" title="Карточки" aria-label="Карточки"><svg class="icon"><use href="#i-cards"/></svg><span>Карточки</span></button>
+              <button data-view="compact" aria-pressed="true" title="Плотная сетка — много мелких карточек" aria-label="Плотная сетка"><svg class="icon"><use href="#i-compact"/></svg><span>Плотно</span></button>
               <button data-view="list" aria-pressed="false" title="Список" aria-label="Список"><svg class="icon"><use href="#i-list"/></svg><span>Список</span></button>
             </div>
             <button class="random-button" id="shuffle-cards" title="Перемешать карточки" aria-label="Перемешать карточки"><svg class="icon"><use href="#i-shuffle"/></svg></button>
@@ -78,7 +78,7 @@
           <label class="sort-control"><span class="sr-only">Сортировка</span><select id="sort"><option value="default">По номеру</option><option value="short">Сначала короткие</option><option value="long">Сначала длинные</option><option value="shuffle">Случайный порядок</option></select></label>
         </div>
         <div class="sound-canvas" id="sound-canvas">
-          <div class="sample-list" id="sample-list" data-view="cards" role="list" aria-label="Семплы"></div>
+          <div class="sample-list" id="sample-list" data-view="compact" role="list" aria-label="Семплы"></div>
         <div class="empty-state" id="empty-state" hidden>
           <svg class="icon"><use href="#i-search"/></svg>
           <h3 id="empty-title">Ничего не нашлось</h3>
