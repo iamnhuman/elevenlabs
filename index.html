@@ -14,8 +14,10 @@
   <script src="assets/vendor/sonoscope/terrain.js" defer></script>
   <script src="spectrogram-3d.js" defer></script>
   <script src="spectrogram-2d.js" defer></script>
+  <script src="spectrogram-1d.js" defer></script>
   <script src="spectrogram-view.js" defer></script>
   <script src="player-spectrum.js" defer></script>
+  <script src="spectral-image.js" defer></script>
   <script src="waveform.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -107,10 +109,12 @@
         </div>
       </div>
       <div class="player-options">
-        <div class="spectrum-switch" role="group" aria-label="Вид спектрограммы">
+        <div class="spectrum-switch" role="group" aria-label="Визуализация звука">
+          <button data-spectrum-view="1d" aria-pressed="false" title="Волны низких, средних и высоких частот" aria-label="Волны низких, средних и высоких частот">1D</button>
           <button data-spectrum-view="2d" aria-pressed="true" title="Спектрограмма: время и частота" aria-label="Плоская спектрограмма">2D</button>
           <button data-spectrum-view="3d" aria-pressed="false" title="Объёмная спектрограмма" aria-label="Объёмная спектрограмма">3D</button>
         </div>
+        <button class="visual-toggle" id="enable-visual" aria-pressed="false" title="Встроить изображение выбранного звука в его спектрограмму" disabled>Enable visual</button>
         <div class="volume-control"><button class="icon-button" id="mute" aria-label="Выключить звук" title="Звук (M)"><svg class="icon"><use href="#i-volume"/></svg></button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Громкость"></div>
         <a class="icon-button player-download" id="player-download" aria-label="Скачать оригинал" title="Скачать оригинал" hidden download><svg class="icon"><use href="#i-download"/></svg></a>
       </div>

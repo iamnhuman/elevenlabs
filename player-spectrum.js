@@ -41,7 +41,7 @@
       this.frame = 0;
       this.epoch = 0;
       this.lastPaint = -Infinity;
-      this.mode = mode === '3d' ? '3d' : '2d';
+      this.mode = ['1d', '2d', '3d'].includes(mode) ? mode : '2d';
       element.dataset.state = 'idle';
       this.syncState = () => this.sync();
       ['playing', 'pause', 'ended', 'volumechange', 'seeking', 'seeked', 'loadedmetadata', 'error'].forEach(event => audio.addEventListener(event, this.syncState));
@@ -49,9 +49,9 @@
       motion?.addEventListener?.('change', this.syncState);
     }
 
-    async select(sample) {
+    async select(sample, { recording: replacement = null, force = false } = {}) {
       if (!sample) return;
-      if (this.sample?.id === sample.id && this.recording) { this.sync(); return; }
+      if (!force && this.sample?.id === sample.id && this.recording) { this.sync(); return; }
       const epoch = ++this.epoch;
       this.sample = sample;
       this.recording = null;
@@ -60,7 +60,7 @@
       this.element.dataset.state = 'loading';
       try {
         this.visualPromise ||= Promise.resolve(this.Visual.create(this.element, this.mode)).catch(error => { this.visualPromise = null; throw error; });
-        const [visual, recording] = await Promise.all([this.visualPromise, this.load(sample)]);
+        const [visual, recording] = await Promise.all([this.visualPromise, replacement || this.load(sample)]);
         if (epoch !== this.epoch) return;
         this.visual = visual;
         this.visual.setMode?.(this.mode);
@@ -79,7 +79,7 @@
     }
 
     setMode(mode) {
-      this.mode = mode === '3d' ? '3d' : '2d';
+      this.mode = ['1d', '2d', '3d'].includes(mode) ? mode : '2d';
       this.visual?.setMode?.(this.mode);
       this.sync();
     }
@@ -91,9 +91,10 @@
       const running = !this.audio.paused && !this.audio.ended && !this.audio.muted && this.audio.volume > 0 && !this.document?.hidden;
       this.element.dataset.state = running ? 'live' : 'paused';
       if (!running) return;
+      const frameRate = this.motion?.matches || this.visual.software ? 12 : this.mode === '1d' ? 60 : 24;
       const draw = timestamp => {
         this.frame = 0;
-        if (timestamp - this.lastPaint >= 1000 / (this.motion?.matches || this.visual.software ? 12 : 24)) {
+        if (timestamp - this.lastPaint >= 1000 / frameRate) {
           this.lastPaint = timestamp;
           this.paint();
         }

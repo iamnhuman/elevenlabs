@@ -100,3 +100,34 @@ test('a real playback failure clears loading and provides a user-visible error',
   assert.equal(errors.length, 1);
   assert.match(errors[0], /разрешить звук/);
 });
+
+test('processed source replacement preserves paused position, volume and loop and resumes the same source', async () => {
+  const { audio, player } = setup();
+  const first = player.select(a); audio.metadata(15); audio.requests[0].resolve(); await first;
+  audio.currentTime = 6; audio.volume = .4; audio.loop = true;
+  player.pause();
+  await player.replaceSource('blob:visual');
+  assert.equal(audio.paused, true);
+  audio.metadata(15);
+  assert.equal(audio.currentTime, 6);
+  assert.equal(audio.volume, .4);
+  assert.equal(audio.loop, true);
+  const resume = player.select(a); audio.requests[1].resolve(); await resume;
+  assert.equal(audio.src, 'blob:visual');
+  assert.equal(audio.loads, 2);
+});
+
+test('rapid processed/original changes preserve pending seek and new tracks always use their own audio', async () => {
+  const { audio, player, errors } = setup();
+  const first = player.select(a); audio.metadata(15); audio.requests[0].resolve(); await first;
+  audio.currentTime = 9;
+  const enable = player.replaceSource('blob:visual');
+  const disable = player.replaceSource(a.src);
+  audio.metadata(15);
+  assert.equal(audio.currentTime, 9);
+  audio.requests[2].resolve(); await disable;
+  audio.requests[1].reject(new Error('obsolete')); await enable;
+  assert.deepEqual(errors, []);
+  const next = player.select(b); audio.requests[3].resolve(); await next;
+  assert.equal(audio.src, b.src);
+});

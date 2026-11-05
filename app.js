@@ -31,9 +31,10 @@
   const savedSpectrumView = storage.get('spectrum-view', '2d');
   const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio, { mode: savedSpectrumView });
   function setSpectrumView(mode, persist = true) {
-    mode = mode === '3d' ? '3d' : '2d';
+    mode = ['1d', '2d', '3d'].includes(mode) ? mode : '2d';
     spectrum.setMode(mode);
     $('.player').dataset.spectrumView = mode;
+    $('#enable-visual').hidden = mode !== '2d';
     $$('.spectrum-switch [data-spectrum-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.spectrumView === mode)));
     if (persist) storage.set('spectrum-view', mode);
   }
@@ -67,6 +68,25 @@
     onError: toast,
 
   });
+  const visualAudio = new window.SpectralImage(player, spectrum, {
+    onError: toast,
+    onChange: state => {
+      const button = $('#enable-visual');
+      button.disabled = !state.available;
+      button.textContent = state.busy ? `Cancel · ${state.progress}%` : state.enabled ? 'Disable visual' : 'Enable visual';
+      button.setAttribute('aria-pressed', String(state.enabled || state.busy));
+      button.setAttribute('aria-busy', String(state.busy));
+      button.title = state.busy ? 'Отменить обработку' : state.enabled ? 'Вернуть оригинальный звук' : 'Встроить изображение выбранного звука в его спектрограмму';
+      if (state.sample && state.sample.id === player.sample?.id) {
+        const download = $('#player-download');
+        download.href = state.enabled ? state.result.url : state.sample.original;
+        download.download = state.enabled ? `${state.sample.title}-visual.wav` : `${state.sample.title}.mp3`;
+        download.title = state.enabled ? 'Скачать звук с изображением (WAV)' : 'Скачать оригинал';
+        download.setAttribute('aria-label', download.title);
+      }
+    },
+  });
+  $('#enable-visual').addEventListener('click', () => { void visualAudio.toggle(); });
 
   // Refresh the current waveform and timeline while audio is playing.
   function paintProgress(timestamp = 0) {
@@ -90,8 +110,12 @@
 
   function play(sample, options = {}) {
     if (!sample) { toast('Сначала выбери коллекцию со звуками.'); return; }
+    const changed = player.sample?.id !== sample.id;
+    if (changed) setSpectrumView('2d');
+    visualAudio.select(sample);
     void spectrum.select(sample);
     void player.select(sample, options);
+    if (changed) void visualAudio.toggle();
   }
 
   function togglePlayback() {
@@ -236,6 +260,8 @@
         $('#player-title').textContent = sample.title;
         $('#player-download').href = sample.original;
         $('#player-download').download = `${sample.title}.mp3`;
+        $('#player-download').title = 'Скачать оригинал';
+        $('#player-download').setAttribute('aria-label', 'Скачать оригинал');
         $('#player-download').hidden = false;
         $('#seek').disabled = false;
         playerPanel.classList.add('can-seek');

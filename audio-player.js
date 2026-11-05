@@ -35,10 +35,11 @@
       }
       const request = ++this.sequence;
       if (this.sample?.id !== sample.id || this.audio.error) {
+        this.source = this.sample?.id === sample.id ? (this.source || sample.src) : sample.src;
         this.audio.pause();
         this.sample = sample;
         this.pendingSeek = fraction;
-        this.audio.src = sample.src;
+        this.audio.src = this.source;
         this.audio.load();
       } else if (fraction !== null) {
         this.pendingSeek = fraction;
@@ -46,6 +47,26 @@
         this.audio.currentTime = 0;
       }
       this.applySeek();
+      await this.startPlayback(request);
+    }
+
+    // A processed version uses the same media element and the same transport.
+    async replaceSource(src) {
+      if (!this.sample || this.source === src) return;
+      const playing = !this.audio.paused && !this.audio.ended;
+      const fraction = this.pendingSeek ?? this.audio.currentTime / (this.audio.duration || this.sample.duration);
+      const request = ++this.sequence;
+      this.audio.pause();
+      this.source = src;
+      this.pendingSeek = Number.isFinite(fraction) ? fraction : 0;
+      this.audio.src = src;
+      this.audio.load();
+      this.applySeek();
+      this.onChange();
+      if (playing) await this.startPlayback(request);
+    }
+
+    async startPlayback(request) {
       this.loading = true;
       this.onChange();
       try {

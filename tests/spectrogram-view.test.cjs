@@ -3,16 +3,17 @@ const assert = require('node:assert/strict');
 const SpectrogramView = require('../spectrogram-view.js');
 const Spectrogram3D = require('../spectrogram-3d.js');
 
-test('switching reuses each canvas and displays the same recording and playback position', () => {
-  const creates = { '3d': 0, '2d': 0 };
+test('switching reuses each SVG/canvas and displays the same recording and playback position', () => {
+  const creates = { '3d': 0, '2d': 0, '1d': 0 };
   const element = { replaceChildren(canvas) { this.canvas = canvas; } };
   const factory = mode => ({ create() {
     creates[mode]++;
-    return { canvas: { mode }, frames: [], resize() {}, show(...frame) { this.frames.push(frame); }, clear() { this.cleared = true; } };
+    return { [mode === '1d' ? 'svg' : 'canvas']: { mode }, frames: [], resize() {}, show(...frame) { this.frames.push(frame); }, clear() { this.cleared = true; } };
   } });
-  const view = new SpectrogramView(element, '2d', { ThreeD: factory('3d'), TwoD: factory('2d') });
+  const view = new SpectrogramView(element, '1d', { ThreeD: factory('3d'), TwoD: factory('2d'), OneD: factory('1d') });
   const recording = { data: [1, 2, 3] };
-  assert.deepEqual(creates, { '3d': 0, '2d': 1 }, 'Saved 2D mode does not initialize WebGL');
+  assert.deepEqual(creates, { '3d': 0, '2d': 0, '1d': 1 }, 'Saved 1D mode only initializes SVG');
+  assert.equal(element.canvas.mode, '1d');
   view.show(recording, 4.5, .8);
   view.setMode('3d');
   assert.equal(element.canvas.mode, '3d');
@@ -22,7 +23,10 @@ test('switching reuses each canvas and displays the same recording and playback 
   assert.equal(element.canvas.mode, '2d');
   assert.deepEqual(view.active.frames.at(-1), [recording, 9, .6]);
   view.setMode('3d');
-  assert.deepEqual(creates, { '3d': 1, '2d': 1 });
+  view.setMode('1d');
+  assert.equal(element.canvas.mode, '1d');
+  assert.deepEqual(view.active.frames.at(-1), [recording, 9, .6]);
+  assert.deepEqual(creates, { '3d': 1, '2d': 1, '1d': 1 });
   view.clear();
   assert.ok([...view.views.values()].every(renderer => renderer.cleared));
   assert.equal(view.lastFrame, null, 'No previous clip leaks into the next selection');
