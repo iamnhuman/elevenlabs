@@ -156,7 +156,6 @@
   function shuffleCards() {
     if (visible.length < 2) return;
     shuffledOrders.set(filter, createShuffledOrder());
-    $('#sort').value = 'shuffle';
     renderList();
   }
 
@@ -214,12 +213,8 @@
       const inGroup = sectionOf(sample) === filter;
       return inGroup && (!query || (/^\d+$/.test(query) && sample.number === Number(query)));
     });
-    const sort = $('#sort').value;
-    if (sort === 'short') visible.sort((a, b) => a.duration - b.duration);
-    if (sort === 'long') visible.sort((a, b) => b.duration - a.duration);
-    if (sort === 'shuffle') {
-      if (!shuffledOrders.has(filter)) shuffledOrders.set(filter, createShuffledOrder());
-      const order = shuffledOrders.get(filter);
+    const order = shuffledOrders.get(filter);
+    if (order) {
       visible.sort((a, b) => order.get(a.id) - order.get(b.id));
     }
     $('#sample-list').replaceChildren(...visible.map(sample => rowElements.get(sample.id).element));
@@ -324,10 +319,6 @@
     renderList();
   }));
   $('#search').addEventListener('input', renderList);
-  $('#sort').addEventListener('change', () => {
-    if ($('#sort').value === 'shuffle' && visible.length > 1) shuffleCards();
-    else renderList();
-  });
   $('#reset-filters').addEventListener('click', () => { $('#search').value = ''; renderList(); $('#search').focus(); });
   $('#play-pause').addEventListener('click', togglePlayback);
   $('#previous').addEventListener('click', () => adjacent(-1));

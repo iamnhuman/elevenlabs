@@ -92,8 +92,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .random-button { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 9px; background: transparent; color: #8c8c94; }
 .random-button:hover { color: #eee; background: #17171a; }
 .random-button .icon { width: 18px; height: 18px; }
-.list-tools { display: flex; align-items: center; justify-content: flex-end; gap: 20px; min-height: 42px; padding: 0 0 8px; color: #96969e; font-size: 11px; }
-.sort-control select { max-width: 190px; padding: 6px 0 6px 8px; border: 0; border-radius: 5px; background: var(--bg); color: #9999a1; font-size: 11px; }
 .sound-canvas { min-height: 360px; }
 
 /* Captions and waveforms sit below each full square photograph. */
@@ -245,7 +243,6 @@ dialog p { margin: 7px 0 24px; color: var(--muted); font-size: 12px; }
   .filters { gap: 28px; }
   .toolbar-right { width: 100%; gap: 10px; }
   .search-box { flex: 1; width: auto; }
-  .list-tools { min-height: 42px; }
   .sample-list { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .sample-row { scroll-margin-top: 154px; scroll-margin-bottom: 210px; }
   .sample-title { font-size: 24px; }

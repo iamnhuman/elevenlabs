@@ -22,6 +22,7 @@ function fixture(saved = new Map()) {
     click() { this.emit('click', { target: this }); }
   }
   const document = new Element(); document.body = new Element(); document.createElement = () => new Element();
+  document.querySelector = selector => selector === '#sort' ? null : Element.prototype.querySelector.call(document, selector);
   const modes = ['1d', '2d', '3d'].map(mode => { const button = new Element(); button.dataset.spectrumView = mode; return button; });
   document.querySelectorAll = selector => selector === '.spectrum-switch [data-spectrum-view]' ? modes : [];
   const audio = document.querySelector('#audio');
@@ -148,4 +149,25 @@ test('rapid automatic selection aborts the previous job without applying its aud
   await new Promise(setImmediate);
   assert.equal(f.effect.enabled, true);
   assert.equal(f.spectrum.recording.right, true);
+});
+
+test('the shuffle button works without a sort dropdown and preserves search order and playback', () => {
+  const f = fixture();
+  const list = f.document.querySelector('#sample-list');
+  const ids = () => Array.from(list.children, row => row.dataset.id);
+  f.select(0);
+  f.audio.currentTime = 2;
+  f.document.querySelector('#shuffle-cards').click();
+  assert.deepEqual(ids(), ['b', 'a']);
+  assert.equal(f.audio.src, 'a.mp3');
+  assert.equal(f.audio.currentTime, 2);
+  assert.equal(f.audio.paused, false);
+  const search = f.document.querySelector('#search');
+  search.value = '1'; search.emit('input');
+  assert.deepEqual(ids(), ['a']);
+  search.value = ''; search.emit('input');
+  assert.deepEqual(ids(), ['b', 'a']);
+  f.document.querySelector('#shuffle-cards').click();
+  assert.deepEqual(ids(), ['a', 'b']);
+  f.effect.cancel();
 });
