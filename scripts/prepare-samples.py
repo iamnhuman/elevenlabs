@@ -14,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
 from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,6 +26,12 @@ ENVELOPE_RATE = 30
 
 def run(*args):
     return subprocess.check_output(args, stderr=subprocess.PIPE)
+
+
+def original_url(path):
+    # Git stores composed Unicode names even when macOS reports decomposed ones.
+    relative = unicodedata.normalize("NFC", path.relative_to(ROOT).as_posix())
+    return quote(relative, safe="/")
 
 
 def prepare(path):
@@ -86,7 +93,7 @@ def prepare(path):
         "id": identity, "title": title, "subtitle": subtitle, "group": group,
         "order": order, "filename": path.name,
         "src": f"assets/audio/{identity}.mp3",
-        "original": quote(path.relative_to(ROOT).as_posix(), safe="/"),
+        "original": original_url(path),
         "duration": round(duration, 3), "bytes": target.stat().st_size,
         "originalBytes": path.stat().st_size,
         "sampleRate": int(stream["sample_rate"]), "channels": stream["channels"],
@@ -128,10 +135,6 @@ def update_page_counts(samples):
                       lambda match: match[1] + str(count) + match[2], html)
     html = re.sub(r'(<span id="sample-count"[^>]*>)\d+(</span>)',
                   lambda match: match[1] + str(counts["samples"]) + match[2], html)
-    count = counts["samples"]
-    word = "семпл" if count % 10 == 1 and count % 100 != 11 else "семпла" if 2 <= count % 10 <= 4 and not 12 <= count % 100 <= 14 else "семплов"
-    html = re.sub(r'(<span id="result-label"[^>]*>)[^<]*(</span>)',
-                  lambda match: match[1] + f"{count} {word}" + match[2], html)
     source_url = quote(SOURCE.relative_to(ROOT).as_posix(), safe="/") + "/"
     html = re.sub(r'<a href="[^"]*">Открыть папку с оригиналами</a>',
                   f'<a href="{source_url}">Открыть папку с оригиналами</a>', html)

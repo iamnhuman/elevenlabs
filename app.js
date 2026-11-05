@@ -55,7 +55,6 @@
   };
   const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
-  const word = count => count % 10 === 1 && count % 100 !== 11 ? 'семпл' : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? 'семпла' : 'семплов';
 
   function toast(message) {
     const element = $('#toast');
@@ -225,11 +224,9 @@
     }
     $('#sample-list').replaceChildren(...visible.map(sample => rowElements.get(sample.id).element));
     visible.forEach(sample => rowElements.get(sample.id).waveView.refresh());
-    $('#result-label').textContent = `${visible.length} ${filter === 'track' ? (visible.length === 1 ? 'трек' : 'треков') : word(visible.length)}${query ? ` по запросу «${$('#search').value.trim()}»` : ''}`;
     $('#sample-count').textContent = visible.length;
     $('#collection-title').textContent = filter;
     $('#sample-list').setAttribute('aria-label', filter === 'track' ? 'Треки' : 'Семплы');
-    $('#collection-meta').textContent = filter === 'track' ? 'Больше 30 секунд' : 'До 30 секунд';
     $('#empty-state').hidden = visible.length > 0;
     $('#shuffle-cards').disabled = visible.length < 2;
     $('#empty-title').textContent = 'Ничего не нашлось';

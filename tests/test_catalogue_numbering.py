@@ -3,6 +3,8 @@ from copy import deepcopy
 import importlib.util
 from pathlib import Path
 import unittest
+import unicodedata
+from urllib.parse import unquote, urlsplit
 
 spec = importlib.util.spec_from_file_location(
     "prepare_samples", Path(__file__).resolve().parents[1] / "scripts/prepare-samples.py")
@@ -15,6 +17,17 @@ def sound(identity, duration):
 
 
 class NumberingTests(unittest.TestCase):
+    def test_original_urls_match_git_unicode_names_and_escape_special_characters(self):
+        name = "кожаный - 11labs #1.mp3"
+        directory = module.ROOT / "sound" / "samplepack sfx v3"
+        decomposed = directory / unicodedata.normalize("NFD", name)
+        composed = directory / unicodedata.normalize("NFC", name)
+        url = module.original_url(decomposed)
+        self.assertEqual(url, module.original_url(composed))
+        self.assertEqual(unquote(url), "sound/samplepack sfx v3/" + name)
+        self.assertEqual(urlsplit(url).fragment, "")
+        self.assertNotIn(" ", url)
+
     def test_sections_start_at_one_and_exactly_thirty_seconds_is_a_sample(self):
         sounds = [sound("a", 15), sound("b", 120), sound("c", 30), sound("d", 30.001)]
         module.number_samples(sounds)

@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 import json
 import re
 import struct
+import unicodedata
 from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
 from urllib.request import Request, urlopen
@@ -49,8 +50,8 @@ def main():
     samples = catalogue["samples"]
     assert samples and len({s["id"] for s in samples}) == len(samples), "Duplicate or missing sample IDs"
     source = ROOT / catalogue["source"]
-    expected_originals = {path.resolve() for path in source.rglob("*.mp3")}
-    actual_originals = {local_file(sample["original"]).resolve() for sample in samples}
+    expected_originals = {unicodedata.normalize("NFC", str(path.resolve())) for path in source.rglob("*.mp3")}
+    actual_originals = {unicodedata.normalize("NFC", str(local_file(sample["original"]).resolve())) for sample in samples}
     assert actual_originals == expected_originals, "Catalogue does not match the selected source folder"
     page = Page()
     page.feed((ROOT / "index.html").read_text())
