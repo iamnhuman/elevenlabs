@@ -29,6 +29,7 @@
   let visible = [...samples];
   const shuffledOrders = new Map();
   const savedSpectrumView = storage.get('spectrum-view', '2d');
+  let visualEnabled = storage.get('visual-enabled', true) === true;
   const spectrum = new window.PlayerSpectrum($('#player-spectrum'), audio, { mode: savedSpectrumView });
   function setSpectrumView(mode, persist = true) {
     mode = ['1d', '2d', '3d'].includes(mode) ? mode : '2d';
@@ -86,7 +87,12 @@
       }
     },
   });
-  $('#enable-visual').addEventListener('click', () => { void visualAudio.toggle(); });
+  $('#enable-visual').addEventListener('click', () => {
+    if (!visualAudio.available) return;
+    visualEnabled = !(visualAudio.enabled || visualAudio.busy);
+    storage.set('visual-enabled', visualEnabled);
+    void visualAudio.toggle();
+  });
 
   // Refresh the current waveform and timeline while audio is playing.
   function paintProgress(timestamp = 0) {
@@ -111,11 +117,10 @@
   function play(sample, options = {}) {
     if (!sample) { toast('Сначала выбери коллекцию со звуками.'); return; }
     const changed = player.sample?.id !== sample.id;
-    if (changed) setSpectrumView('2d');
     visualAudio.select(sample);
     void spectrum.select(sample);
     void player.select(sample, options);
-    if (changed) void visualAudio.toggle();
+    if (changed && visualEnabled) void visualAudio.toggle();
   }
 
   function togglePlayback() {

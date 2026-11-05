@@ -6,7 +6,7 @@ const SamplePlayer = require('../audio-player.js');
 const SpectralImage = require('../spectral-image.js');
 
 // Run the app's real event wiring without a browser, decoding audio or drawing canvases.
-function fixture() {
+function fixture(saved = new Map()) {
   class Element {
     constructor() {
       this.dataset = {}; this.value = ''; this.attributes = {}; this.listeners = new Map(); this.nodes = new Map();
@@ -50,19 +50,19 @@ function fixture() {
     Waveform: class { refresh() {} setActive() {} setProgress() {} },
   };
   vm.runInNewContext(fs.readFileSync(require.resolve('../app.js'), 'utf8'), {
-    window, document, navigator: {}, localStorage: { getItem: key => key.endsWith('spectrum-view') ? '"3d"' : null, setItem() {} },
+    window, document, navigator: {}, localStorage: { getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {}, setTimeout, clearTimeout,
   });
   const select = index => {
     const list = document.querySelector('#sample-list'), row = list.children[index];
     list.emit('click', { target: { closest: selector => selector === '.sample-row' ? row : { dataset: { action: 'play' } } } });
   };
-  return { select, document, modes, jobs, audio, effect, spectrum, button: document.querySelector('#enable-visual') };
+  return { select, document, modes, jobs, audio, effect, spectrum, saved, button: document.querySelector('#enable-visual') };
 }
 
-test('selecting a new sample forces 2D and immediately selects visual generation', async () => {
+test('2D and visual start enabled by default, then manual choices survive track changes', async () => {
   const f = fixture();
-  assert.equal(f.spectrum.mode, '3d');
+  assert.equal(f.spectrum.mode, '2d');
   f.select(0);
   assert.equal(f.spectrum.mode, '2d');
   assert.equal(f.button.hidden, false);
@@ -76,17 +76,54 @@ test('selecting a new sample forces 2D and immediately selects visual generation
   assert.equal(f.audio.src, 'blob:visual');
   assert.equal(f.spectrum.recording.repeated, true);
 
-  f.button.click(); // A manual disable survives pausing/resuming this sample.
+  f.button.click();
   f.modes[2].click();
   f.select(0);
   assert.equal(f.effect.enabled, false);
   assert.equal(f.spectrum.mode, '3d');
   assert.equal(f.jobs.length, 1);
-  f.select(1);
-  assert.equal(f.spectrum.mode, '2d');
+  f.document.querySelector('#next').click();
+  assert.equal(f.spectrum.mode, '3d');
+  assert.equal(f.button.attributes['aria-pressed'], 'false');
+  assert.equal(f.audio.src, 'b.mp3');
+  assert.equal(f.jobs.length, 1, 'Disabling visual persists when selecting the next track');
+  assert.equal(f.saved.get('sample-room:visual-enabled'), 'false');
+
+  f.modes[1].click();
+  f.button.click();
   assert.equal(f.button.attributes['aria-pressed'], 'true');
   assert.equal(f.jobs.length, 2);
+  f.document.querySelector('#player-random').click();
+  assert.equal(f.spectrum.mode, '2d');
+  assert.equal(f.jobs.length, 3, 'Re-enabling visual applies to subsequent tracks');
+  assert.equal(f.saved.get('sample-room:visual-enabled'), 'true');
   f.effect.cancel();
+});
+
+test('saved visualization mode and disabled visual survive reload and sample selection', () => {
+  for (const mode of ['1d', '2d', '3d']) {
+    const f = fixture(new Map([['sample-room:spectrum-view', JSON.stringify(mode)], ['sample-room:visual-enabled', 'false']]));
+    f.select(0);
+    f.document.querySelector('#next').click();
+    assert.equal(f.spectrum.mode, mode);
+    assert.equal(f.jobs.length, 0);
+    assert.equal(f.button.attributes['aria-pressed'], 'false');
+    assert.equal(f.button.hidden, mode !== '2d');
+  }
+});
+
+test('cancelling visual generation keeps it disabled for the next track', async () => {
+  const f = fixture();
+  f.select(0);
+  f.button.click();
+  assert.equal(f.jobs[0].options.signal.aborted, true);
+  f.select(1);
+  f.jobs[0].resolve({ blob: {}, recording: { wrong: true } });
+  await new Promise(setImmediate);
+  assert.equal(f.jobs.length, 1);
+  assert.equal(f.audio.src, 'b.mp3');
+  assert.equal(f.effect.enabled, false);
+  assert.equal(f.button.attributes['aria-pressed'], 'false');
 });
 
 test('rapid automatic selection aborts the previous job without applying its audio', async () => {
